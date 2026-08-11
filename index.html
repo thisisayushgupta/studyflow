@@ -26,7 +26,12 @@ input{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:1
 .grid{display:grid;grid-template-columns:1.15fr .85fr;gap:20px}.timer-card{text-align:center;padding:34px 28px}.timer-label{color:#777;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px}.timer{font-variant-numeric:tabular-nums;font-size:92px;line-height:1;margin:24px 0 22px;letter-spacing:-5px;font-weight:650}.timer-controls{display:flex;justify-content:center;gap:10px}.session-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px;text-align:left}.session-row label,.notes-label{font-size:12px;color:#777;font-weight:650;display:block;margin-bottom:6px}
 .cardpad{padding:22px}.section-title{font-size:17px;font-weight:750;margin:0 0 16px}.chart{height:220px;display:flex;align-items:end;gap:10px;padding-top:15px}.bar-wrap{height:100%;flex:1;display:flex;align-items:end;justify-content:center;position:relative}.bar{width:min(42px,75%);min-height:3px;border-radius:8px 8px 3px 3px;background:#111}.bar-label{position:absolute;bottom:-24px;font-size:11px;color:#888}.bar-value{position:absolute;top:-18px;font-size:10px;color:#666}.history{margin-top:20px;padding:22px}.table{width:100%;border-collapse:collapse;font-size:13px}.table th{text-align:left;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:.6px;padding:10px 8px;border-bottom:1px solid var(--line)}.table td{padding:13px 8px;border-bottom:1px solid #f0f0f0}.pill{display:inline-block;background:#f1f1f3;border-radius:99px;padding:5px 9px;font-size:11px;font-weight:700}.empty{text-align:center;padding:42px;color:#888}
 .analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.analytics-card{padding:22px}.big-number{font-size:44px;font-weight:780;letter-spacing:-2px;margin:5px 0}.subjects{display:flex;flex-direction:column;gap:13px}.subject{display:grid;grid-template-columns:120px 1fr 55px;align-items:center;gap:10px;font-size:13px}.progress{height:8px;background:#eee;border-radius:99px;overflow:hidden}.progress i{display:block;height:100%;border-radius:99px;background:#111}.streak{display:flex;gap:5px;flex-wrap:wrap;margin-top:18px}.day{width:14px;height:14px;border-radius:3px;background:#e8e8e8}.day.l1{background:#cfcfcf}.day.l2{background:#999}.day.l3{background:#555}.day.l4{background:#111}.settings-row{display:flex;justify-content:space-between;align-items:center;padding:17px 0;border-bottom:1px solid var(--line)}
-.sync{font-size:11px;color:#777;margin-top:8px}.loading{opacity:.6;pointer-events:none}
+.sync{font-size:11px;color:#777;margin-top:8px}
+.history-delete{background:none;color:#c33;font-size:12px;font-weight:650;padding:6px 8px;border-radius:7px}
+.history-delete:hover{background:#fff0f0}
+.table th:last-child,.table td:last-child{text-align:right;width:80px}
+@media(max-width:600px){.table th:last-child,.table td:last-child{display:table-cell;width:55px}.history-delete{font-size:0}.history-delete:after{content:"×";font-size:18px}}
+.loading{opacity:.6;pointer-events:none}
 @media(max-width:900px){.sidebar{width:70px}.brand{font-size:0}.brand:after{content:"S";font-size:22px}.nav button{font-size:0;text-align:center}.nav button:nth-child(1):before{content:"◉";font-size:18px}.nav button:nth-child(2):before{content:"▦";font-size:18px}.nav button:nth-child(3):before{content:"◷";font-size:18px}.nav button:nth-child(4):before{content:"⚙";font-size:18px}.main{margin-left:70px;width:calc(100% - 70px);padding:25px}.grid,.analytics-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.userbox{display:none}}
 @media(max-width:600px){.main{padding:18px}.timer{font-size:65px}.session-row{grid-template-columns:1fr}.table{font-size:11px}.table th:nth-child(4),.table td:nth-child(4){display:none}.top{align-items:flex-start}.date{font-size:11px}}
 </style>
@@ -244,10 +249,28 @@ function makeChart(id,days){
 function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
 function tableHTML(list){
  if(!list.length)return '<div class="empty">No study sessions yet. Complete your first timer session.</div>';
- return `<table class="table"><thead><tr><th>Date</th><th>Subject</th><th>Duration</th><th>Notes</th></tr></thead><tbody>${list.map(s=>`<tr><td>${new Date(s.created_at).toLocaleString([],{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}</td><td><span class="pill">${esc(s.subject)}</span></td><td>${fmtMin(Number(s.minutes))}</td><td>${esc(s.notes||"—")}</td></tr>`).join("")}</tbody></table>`
+ return `<table class="table"><thead><tr><th>Date</th><th>Subject</th><th>Duration</th><th>Notes</th><th></th></tr></thead><tbody>${list.map(s=>`<tr><td>${new Date(s.created_at).toLocaleString([],{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}</td><td><span class="pill">${esc(s.subject)}</span></td><td>${fmtMin(Number(s.minutes))}</td><td>${esc(s.notes||"—")}</td><td><button class="history-delete" onclick="deleteSession(${Number(s.id)})" title="Delete this session">Delete</button></td></tr>`).join("")}</tbody></table>`
 }
 function renderRecent(){$("recent").innerHTML=tableHTML(sessions.slice(0,6))}
 function renderHistory(){$("fullHistory").innerHTML=tableHTML(sessions)}
+
+async function deleteSession(id){
+ const session=sessions.find(s=>Number(s.id)===Number(id));
+ if(!session)return;
+ const label=`${session.subject||"session"} — ${fmtMin(Number(session.minutes))}`;
+ if(!confirm(`Delete this study session?\n\n${label}\n\nThis cannot be undone.`))return;
+ $("syncStatus").textContent="☁ Deleting…";
+ const {error}=await db.from("study_sessions").delete().eq("id",id).eq("user_id",currentUser.id);
+ if(error){
+   $("syncStatus").textContent="⚠ Delete failed";
+   alert("Could not delete this session: "+(error.message||"Unknown Supabase error"));
+   console.error("Supabase delete error:",error);
+   return;
+ }
+ sessions=sessions.filter(s=>Number(s.id)!==Number(id));
+ $("syncStatus").textContent="☁ Cloud synced";
+ renderAll();
+}
 function renderAnalytics(){
  const total=sessions.reduce((a,s)=>a+Number(s.minutes),0);$("aTotal").textContent=fmtMin(total);$("aAvg").textContent=fmtMin(sessions.length?total/sessions.length:0);
  const map={};sessions.forEach(s=>map[s.subject||"Uncategorized"]=(map[s.subject||"Uncategorized"]||0)+Number(s.minutes));
