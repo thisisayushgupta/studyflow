@@ -709,6 +709,10 @@ input{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:1
   .kpi .n{font-size:24px}
 }
 
+
+/* Save Session state */
+#saveBtn:disabled{opacity:.45;cursor:not-allowed}
+#saveBtn:not(:disabled){box-shadow:0 2px 8px rgba(0,0,0,.08)}
 </style>
 </head>
 <body>
@@ -797,7 +801,7 @@ const SUPABASE_URL = "https://tfufehjjbggqqjhgfgde.supabase.co";
 const SUPABASE_PROJECT_URL = SUPABASE_URL.replace(/\/rest\/v1\/?$/, "").replace(/\/$/, "");
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmdWZlaGpqYmdncXFqaGdmZ2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NjMwMTUsImV4cCI6MjEwMjAzOTAxNX0.jTMOzomIdbb-AodEYfKeirn0MZ5nX91H5aQGL18EVcY";
 
-let db=null,currentUser=null,sessions=[],timerSeconds=1500,timerRunning=false,interval=null,signupMode=false,sessionInitialSeconds=1500,sessionElapsedSeconds=0,sessionSaving=false;
+let db=null,currentUser=null,sessions=[],timerSeconds=1500,timerRunning=false,interval=null,signupMode=false,sessionInitialSeconds=1500,sessionElapsedSeconds=0,sessionSaving=false,sessionStartedAt=null,sessionAccumulatedSeconds=0;
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const fmtMin=m=>m<60?`${Math.round(m)}m`:`${Math.floor(m/60)}h ${Math.round(m%60)}m`;
@@ -862,114 +866,175 @@ async function saveSession(minutes){
  if(error){$("syncStatus").textContent="⚠ Save failed";alert("Cloud save failed: "+(error.message||"Unknown Supabase error"));console.error("Supabase insert error:",error);return false}
  sessions.unshift(data);$("syncStatus").textContent="☁ Cloud synced";renderAll();return true;
 }
+function getElapsedSeconds(){
+  if(timerRunning && sessionStartedAt){
+    return Math.max(0, sessionAccumulatedSeconds + Math.floor((Date.now()-sessionStartedAt)/1000));
+  }
+  return Math.max(0, sessionAccumulatedSeconds);
+}
+function persistTimer(){
+  sessionElapsedSeconds=getElapsedSeconds();
+  localStorage.setItem("studyflow_timer",timerSeconds);
+  localStorage.setItem("studyflow_elapsed",sessionElapsedSeconds);
+  localStorage.setItem("studyflow_accumulated",sessionAccumulatedSeconds);
+  if(sessionStartedAt) localStorage.setItem("studyflow_startedAt",sessionStartedAt);
+  else localStorage.removeItem("studyflow_startedAt");
+}
 function renderTimer(){
- $("timer").textContent=`${pad(Math.floor(timerSeconds/60))}:${pad(timerSeconds%60)}`;
- $("startBtn").textContent=timerRunning?"Pause":"Start";
- // Save becomes available as soon as this session has accumulated any time.
- $("saveBtn").disabled=sessionElapsedSeconds<60 || sessionSaving;
- $("saveBtn").textContent=sessionSaving?"Saving…":"Save Session";
+  sessionElapsedSeconds=getElapsedSeconds();
+  $("timer").textContent=`${pad(Math.floor(timerSeconds/60))}:${pad(timerSeconds%60)}`;
+  $("startBtn").textContent=timerRunning?"Pause":"Start";
+  const mins=Math.floor(sessionElapsedSeconds/60);
+  $("saveBtn").disabled=mins<1 || sessionSaving;
+  $("saveBtn").textContent=sessionSaving?"Saving…":"Save Session";
 }
 function resetTimer(){
- clearInterval(interval);
- timerRunning=false;
- sessionSaving=false;
- const mins=Math.max(1,Math.round(Number($("duration").value||25)));
- $("duration").value=mins;
- timerSeconds=mins*60;
- sessionInitialSeconds=timerSeconds;
- sessionElapsedSeconds=0;
- localStorage.removeItem("studyflow_elapsed");
- localStorage.setItem("studyflow_timer",timerSeconds);
- renderTimer();
+  clearInterval(interval);
+  timerRunning=false;
+  sessionSaving=false;
+  sessionStartedAt=null;
+  sessionAccumulatedSeconds=0;
+  sessionElapsedSeconds=0;
+  const mins=Math.max(1,Math.round(Number($("duration").value||25)));
+  $("duration").value=mins;
+  timerSeconds=mins*60;
+  sessionInitialSeconds=timerSeconds;
+  localStorage.removeItem("studyflow_timer");
+  localStorage.removeItem("studyflow_elapsed");
+  localStorage.removeItem("studyflow_accumulated");
+  localStorage.removeItem("studyflow_startedAt");
+  renderTimer();
+}
+function startTick(){
+  clearInterval(interval);
+  interval=setInterval(async()=>{
+    if(!timerRunning)return;
+    const elapsed=getElapsedSeconds();
+    timerSeconds=Math.max(0,sessionInitialSeconds-elapsed);
+    sessionElapsedSeconds=elapsed;
+    persistTimer();
+    renderTimer();
+
+    if(timerSeconds<=0){
+      clearInterval(interval);
+      timerRunning=false;
+      sessionAccumulatedSeconds=sessionInitialSeconds;
+      sessionStartedAt=null;
+      sessionElapsedSeconds=sessionInitialSeconds;
+      sessionSaving=true;
+      renderTimer();
+      const minutes=Math.max(1,Math.floor(sessionElapsedSeconds/60));
+      const ok=await saveSession(minutes);
+      alert(ok?"Focus session complete and saved to the cloud!":"Focus session complete, but it could not be saved.");
+      resetTimer();
+    }
+  },500);
 }
 function toggleTimer(){
- if(sessionSaving)return;
- if(timerRunning){
-   clearInterval(interval);
-   timerRunning=false;
-   renderTimer();
-   return;
- }
- if(timerSeconds<=0)resetTimer();
- timerRunning=true;
- renderTimer();
- interval=setInterval(async()=>{
-   timerSeconds=Math.max(0,timerSeconds-1);
-   sessionElapsedSeconds++;
-   localStorage.setItem("studyflow_timer",timerSeconds);
-   localStorage.setItem("studyflow_elapsed",sessionElapsedSeconds);
-   renderTimer();
+  if(sessionSaving)return;
 
-   if(timerSeconds<=0){
-     clearInterval(interval);
-     timerRunning=false;
-     sessionSaving=true;
-     renderTimer();
-     const minutes=Math.max(1,Math.floor(sessionElapsedSeconds/60));
-     const ok=await saveSession(minutes);
-     alert(ok?"Focus session complete and saved to the cloud!":"Focus session complete, but it could not be saved.");
-     resetTimer();
-   }
- },1000);
+  if(timerRunning){
+    sessionAccumulatedSeconds=getElapsedSeconds();
+    sessionElapsedSeconds=sessionAccumulatedSeconds;
+    timerSeconds=Math.max(0,sessionInitialSeconds-sessionAccumulatedSeconds);
+    sessionStartedAt=null;
+    timerRunning=false;
+    clearInterval(interval);
+    persistTimer();
+    renderTimer();
+    return;
+  }
+
+  if(timerSeconds<=0)resetTimer();
+
+  // Start/restart the current run without losing accumulated paused time.
+  sessionStartedAt=Date.now();
+  timerRunning=true;
+  persistTimer();
+  renderTimer();
+  startTick();
 }
 async function savePartialSession(){
- if(sessionSaving)return;
+  if(sessionSaving)return;
 
- const elapsedMinutes=Math.floor(sessionElapsedSeconds/60);
- if(elapsedMinutes<1){
-   alert("Study for at least 1 full minute before saving.");
-   return;
- }
+  // Calculate from real elapsed time so mobile browser throttling doesn't lose minutes.
+  const elapsedSeconds=getElapsedSeconds();
+  const elapsedMinutes=Math.floor(elapsedSeconds/60);
 
- const wasRunning=timerRunning;
- clearInterval(interval);
- timerRunning=false;
- sessionSaving=true;
- renderTimer();
+  if(elapsedMinutes<1){
+    alert("Study for at least 1 full minute before saving.");
+    return;
+  }
 
- const ok=await saveSession(elapsedMinutes);
+  const wasRunning=timerRunning;
+  if(wasRunning){
+    sessionAccumulatedSeconds=elapsedSeconds;
+    sessionElapsedSeconds=elapsedSeconds;
+    timerSeconds=Math.max(0,sessionInitialSeconds-elapsedSeconds);
+    sessionStartedAt=null;
+    timerRunning=false;
+    clearInterval(interval);
+    persistTimer();
+  }
 
- if(ok){
-   alert(`Saved ${fmtMin(elapsedMinutes)} of focused study time.`);
-   resetTimer();
- }else{
-   // If cloud save fails, keep the timer/session intact so the user can retry.
-   sessionSaving=false;
-   if(wasRunning){
-     timerRunning=true;
-     interval=setInterval(async()=>{
-       timerSeconds=Math.max(0,timerSeconds-1);
-       sessionElapsedSeconds++;
-       localStorage.setItem("studyflow_timer",timerSeconds);
-       localStorage.setItem("studyflow_elapsed",sessionElapsedSeconds);
-       renderTimer();
-       if(timerSeconds<=0){
-         clearInterval(interval);
-         timerRunning=false;
-       }
-     },1000);
-   }
-   renderTimer();
- }
+  sessionSaving=true;
+  renderTimer();
+
+  const ok=await saveSession(elapsedMinutes);
+
+  if(ok){
+    alert(`Saved ${fmtMin(elapsedMinutes)} of focused study time.`);
+    resetTimer();
+  }else{
+    sessionSaving=false;
+    if(wasRunning){
+      sessionStartedAt=Date.now();
+      timerRunning=true;
+      persistTimer();
+      startTick();
+    }
+    renderTimer();
+  }
 }
 $("duration").addEventListener("change",()=>{let v=Math.max(1,Math.round(Number($("duration").value||25)));$("duration").value=v;if(!timerRunning)resetTimer()});
 $("defaultDuration").addEventListener("change",()=>{const v=Math.max(1,Number($("defaultDuration").value||25));localStorage.setItem("studyflow_default",v);$("duration").value=v;if(!timerRunning)resetTimer()});
 function loadSettings(){
- const d=Number(localStorage.getItem("studyflow_default")||25);
- $("defaultDuration").value=d;
- $("duration").value=d;
- // A browser refresh should preserve an unfinished timer session.
- if(localStorage.getItem("studyflow_timer")!==null){
-   timerSeconds=Math.max(0,Number(localStorage.getItem("studyflow_timer")));
-   sessionElapsedSeconds=Math.max(0,Number(localStorage.getItem("studyflow_elapsed")||0));
-   sessionInitialSeconds=timerSeconds+sessionElapsedSeconds;
- }else{
-   timerSeconds=d*60;
-   sessionInitialSeconds=timerSeconds;
-   sessionElapsedSeconds=0;
- }
- renderTimer();
+  const d=Math.max(1,Math.round(Number(localStorage.getItem("studyflow_default")||25)));
+  $("defaultDuration").value=d;
+  $("duration").value=d;
+
+  const savedTimer=localStorage.getItem("studyflow_timer");
+  const savedAccum=Number(localStorage.getItem("studyflow_accumulated")||localStorage.getItem("studyflow_elapsed")||0);
+  const savedStarted=Number(localStorage.getItem("studyflow_startedAt")||0);
+
+  if(savedTimer!==null){
+    timerSeconds=Math.max(0,Number(savedTimer));
+    sessionAccumulatedSeconds=Math.max(0,savedAccum);
+    sessionElapsedSeconds=sessionAccumulatedSeconds;
+    sessionInitialSeconds=timerSeconds+sessionAccumulatedSeconds;
+
+    if(savedStarted && timerSeconds>0){
+      sessionStartedAt=savedStarted;
+      timerRunning=true;
+      const liveElapsed=getElapsedSeconds();
+      sessionElapsedSeconds=liveElapsed;
+      timerSeconds=Math.max(0,sessionInitialSeconds-liveElapsed);
+      persistTimer();
+      startTick();
+    }else{
+      sessionStartedAt=null;
+      timerRunning=false;
+    }
+  }else{
+    timerSeconds=d*60;
+    sessionInitialSeconds=timerSeconds;
+    sessionAccumulatedSeconds=0;
+    sessionElapsedSeconds=0;
+    sessionStartedAt=null;
+  }
+  renderTimer();
 }
+
 function getDayMinutes(key){return sessions.filter(s=>dateKey(s.created_at)===key).reduce((a,s)=>a+Number(s.minutes),0)}
 function streak(){
  let d=new Date(),key=dateKey(d),count=0;
