@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StudyFlow — Study Time Tracker</title>
+<style>
+:root{
+  --bg:#f5f5f7; --card:#ffffff; --text:#171717; --muted:#737373;
+  --line:#e8e8eb; --accent:#111111; --green:#22a06b; --orange:#f59e0b;
+  --red:#ef4444; --blue:#4f7cff; --purple:#8b5cf6;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}
+button{cursor:pointer;border:0}
+.app{display:flex;min-height:100vh}
+.sidebar{width:235px;background:#111;color:white;padding:26px 16px;position:fixed;inset:0 auto 0 0}
+.brand{font-size:21px;font-weight:750;padding:0 12px 28px;letter-spacing:-.5px}
+.brand span{color:#a3a3a3}
+.nav button{display:block;width:100%;text-align:left;background:transparent;color:#aaa;padding:12px 13px;border-radius:11px;margin:4px 0;font-weight:600}
+.nav button.active,.nav button:hover{background:#252525;color:#fff}
+.sidebar-bottom{position:absolute;bottom:22px;left:20px;right:20px;color:#777;font-size:12px;line-height:1.5}
+.main{margin-left:235px;width:calc(100% - 235px);padding:32px 42px 50px;max-width:1500px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+h1{font-size:31px;margin:0;letter-spacing:-1px}
+.subtitle{color:var(--muted);margin-top:5px}
+.date{color:#666;font-size:14px}
+.view{display:none}.view.active{display:block}
+.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 3px 15px rgba(0,0,0,.025)}
+.timer-card{text-align:center;padding:34px 28px}
+.timer-label{color:var(--muted);font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px}
+.timer{font-variant-numeric:tabular-nums;font-size:92px;line-height:1;margin:24px 0 22px;letter-spacing:-5px;font-weight:650}
+.timer.running{color:#111}
+.timer-controls{display:flex;justify-content:center;gap:10px}
+.btn{padding:12px 19px;border-radius:11px;font-weight:700}
+.primary{background:#111;color:#fff}
+.secondary{background:#f0f0f2;color:#222}
+.danger{background:#fff0f0;color:#d22}
+.session-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px;text-align:left}
+label{font-size:12px;color:#777;font-weight:650;display:block;margin-bottom:6px}
+input,select{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:10px;padding:11px 12px;outline:none}
+input:focus,select:focus{border-color:#aaa;background:white}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:white;border:1px solid var(--line);border-radius:15px;padding:18px}
+.kpi .n{font-size:28px;font-weight:750;margin-top:7px;letter-spacing:-1px}
+.kpi .l{font-size:12px;color:#777;font-weight:650}
+.kpi .delta{font-size:11px;color:var(--green);margin-top:5px}
+.section-title{font-size:17px;font-weight:750;margin:0 0 16px}
+.chart{height:220px;display:flex;align-items:end;gap:10px;padding-top:15px}
+.bar-wrap{height:100%;flex:1;display:flex;align-items:end;justify-content:center;position:relative}
+.bar{width:min(42px,75%);min-height:3px;border-radius:8px 8px 3px 3px;background:#111;transition:.2s}
+.bar:hover{opacity:.75}
+.bar-label{position:absolute;bottom:-24px;font-size:11px;color:#888}
+.bar-value{position:absolute;top:-18px;font-size:10px;color:#666}
+.legend{display:flex;gap:18px;color:#777;font-size:12px;margin-top:29px}
+.subjects{display:flex;flex-direction:column;gap:13px}
+.subject{display:grid;grid-template-columns:105px 1fr 55px;align-items:center;gap:10px;font-size:13px}
+.progress{height:8px;background:#eee;border-radius:99px;overflow:hidden}.progress i{display:block;height:100%;border-radius:99px;background:#111}
+.history{margin-top:20px}
+.table{width:100%;border-collapse:collapse;font-size:13px}
+.table th{text-align:left;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:.6px;padding:10px 8px;border-bottom:1px solid var(--line)}
+.table td{padding:13px 8px;border-bottom:1px solid #f0f0f0}
+.pill{display:inline-block;background:#f1f1f3;border-radius:99px;padding:5px 9px;font-size:11px;font-weight:700}
+.empty{text-align:center;padding:42px;color:#888}
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.big-number{font-size:44px;font-weight:780;letter-spacing:-2px;margin:5px 0}
+.streak{display:flex;gap:5px;flex-wrap:wrap;margin-top:18px}
+.day{width:14px;height:14px;border-radius:3px;background:#e8e8e8}.day.l1{background:#cfcfcf}.day.l2{background:#999}.day.l3{background:#555}.day.l4{background:#111}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.danger-link{color:#c33;background:none;font-size:12px;padding:5px}
+.settings-row{display:flex;justify-content:space-between;align-items:center;padding:17px 0;border-bottom:1px solid var(--line)}
+@media(max-width:900px){.sidebar{width:70px}.brand{font-size:0}.brand:after{content:"S";font-size:22px}.nav button{font-size:0;text-align:center}.nav button:before{font-size:18px}.nav button:nth-child(1):before{content:"◉"}.nav button:nth-child(2):before{content:"▦"}.nav button:nth-child(3):before{content:"◷"}.nav button:nth-child(4):before{content:"⚙"}.main{margin-left:70px;width:calc(100% - 70px);padding:25px}.grid,.analytics-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.main{padding:18px}.timer{font-size:65px}.kpis{grid-template-columns:1fr 1fr}.session-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">Study<span>Flow</span></div>
+  <div class="nav">
+    <button class="active" onclick="showView('dashboard',this)">Dashboard</button>
+    <button onclick="showView('analytics',this)">Analytics</button>
+    <button onclick="showView('history',this)">History</button>
+    <button onclick="showView('settings',this)">Settings</button>
+  </div>
+  <div class="sidebar-bottom">All data is stored locally in your browser.<br>No account. No cloud.</div>
+</aside>
+
+<main class="main">
+<div class="top">
+  <div><h1 id="pageTitle">Study Dashboard</h1><div class="subtitle">Focus, track, improve.</div></div>
+  <div class="date" id="today"></div>
+</div>
+
+<section id="dashboard" class="view active">
+  <div class="kpis">
+    <div class="kpi"><div class="l">Today</div><div class="n" id="kToday">0m</div><div class="delta">study time</div></div>
+    <div class="kpi"><div class="l">This week</div><div class="n" id="kWeek">0h</div><div class="delta">last 7 days</div></div>
+    <div class="kpi"><div class="l">Sessions</div><div class="n" id="kSessions">0</div><div class="delta">completed</div></div>
+    <div class="kpi"><div class="l">Streak</div><div class="n" id="kStreak">0</div><div class="delta">days</div></div>
+  </div>
+  <div class="grid">
+    <div class="card timer-card">
+      <div class="timer-label" id="timerMode">FOCUS SESSION</div>
+      <div class="timer" id="timer">25:00</div>
+      <div class="timer-controls">
+        <button class="btn secondary" onclick="resetTimer()">Reset</button>
+        <button class="btn primary" id="startBtn" onclick="toggleTimer()">Start</button>
+      </div>
+      <div class="session-row">
+        <div><label>Subject</label><input id="subject" placeholder="e.g. Financial Reporting"></div>
+        <div><label>Duration (minutes)</label><input id="duration" type="number" min="1" value="25"></div>
+      </div>
+      <div style="margin-top:12px;text-align:left"><label>Notes (optional)</label><input id="notes" placeholder="What are you studying?"></div>
+    </div>
+    <div class="card">
+      <h2 class="section-title">Last 7 days</h2>
+      <div class="chart" id="weekChart"></div>
+      <div class="legend"><span>■ Study minutes</span></div>
+    </div>
+  </div>
+  <div class="card history">
+    <h2 class="section-title">Recent sessions</h2>
+    <div id="recent"></div>
+  </div>
+</section>
+
+<section id="analytics" class="view">
+  <div class="analytics-grid">
+    <div class="card"><div class="section-title">Total study time</div><div class="big-number" id="aTotal">0h</div><div class="subtitle">All recorded sessions</div></div>
+    <div class="card"><div class="section-title">Average session</div><div class="big-number" id="aAvg">0m</div><div class="subtitle">Across completed sessions</div></div>
+    <div class="card">
+      <h2 class="section-title">Subject breakdown</h2><div class="subjects" id="subjects"></div>
+    </div>
+    <div class="card">
+      <h2 class="section-title">Study consistency</h2>
+      <div class="subtitle">Last 28 days</div><div class="streak" id="heatmap"></div>
+      <div style="margin-top:15px;font-size:12px;color:#888">Less <span class="day" style="display:inline-block;vertical-align:middle"></span> <span class="day l1" style="display:inline-block;vertical-align:middle"></span> <span class="day l2" style="display:inline-block;vertical-align:middle"></span> <span class="day l3" style="display:inline-block;vertical-align:middle"></span> <span class="day l4" style="display:inline-block;vertical-align:middle"></span> More</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:20px"><h2 class="section-title">Weekly trend</h2><div class="chart" id="analyticsChart"></div></div>
+</section>
+
+<section id="history" class="view">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h2 class="section-title" style="margin:0">Study history</h2><button class="danger-link" onclick="clearHistory()">Clear all history</button></div>
+    <div id="fullHistory"></div>
+  </div>
+</section>
+
+<section id="settings" class="view">
+  <div class="card">
+    <h2 class="section-title">Settings</h2>
+    <div class="settings-row"><div><b>Default timer</b><div class="subtitle">Minutes used when you reset</div></div><input id="defaultDuration" type="number" min="1" value="25" style="width:100px"></div>
+    <div class="settings-row"><div><b>Export data</b><div class="subtitle">Download your study history as JSON</div></div><button class="btn secondary" onclick="exportData()">Export</button></div>
+    <div class="settings-row"><div><b>Import data</b><div class="subtitle">Restore a previous JSON export</div></div><button class="btn secondary" onclick="document.getElementById('importFile').click()">Import</button><input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)"></div>
+    <div class="settings-row"><div><b>Delete all data</b><div class="subtitle">Permanently remove locally stored sessions</div></div><button class="btn danger" onclick="clearHistory()">Delete</button></div>
+  </div>
+</section>
+</main>
+</div>
+
+<script>
+const KEY='studyflow_sessions_v1';
+let sessions=JSON.parse(localStorage.getItem(KEY)||'[]');
+let timerSeconds=Number(localStorage.getItem('studyflow_timer')||1500);
+let timerRunning=false, interval=null, sessionStart=null;
+
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const fmtMin=m=>m<60?`${Math.round(m)}m`:`${Math.floor(m/60)}h ${Math.round(m%60)}m`;
+const dateKey=d=>{const x=new Date(d); return x.toISOString().slice(0,10)};
+function todayKey(){return dateKey(new Date())}
+function save(){localStorage.setItem(KEY,JSON.stringify(sessions));renderAll()}
+function showView(id,btn){
+ document.querySelectorAll('.view').forEach(x=>x.classList.remove('active')); $(id).classList.add('active');
+ document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active')); btn.classList.add('active');
+ $('pageTitle').textContent={dashboard:'Study Dashboard',analytics:'Analytics',history:'Study History',settings:'Settings'}[id];
+}
+function renderTimer(){ $('timer').textContent=`${pad(Math.floor(timerSeconds/60))}:${pad(timerSeconds%60)}`; $('timer').classList.toggle('running',timerRunning); $('startBtn').textContent=timerRunning?'Pause':'Start'; }
+function resetTimer(){
+ clearInterval(interval); timerRunning=false; timerSeconds=Math.max(1,Number($('duration').value||25))*60; localStorage.setItem('studyflow_timer',timerSeconds); renderTimer();
+}
+function toggleTimer(){
+ if(timerRunning){clearInterval(interval);timerRunning=false;renderTimer();return}
+ if(timerSeconds<=0) resetTimer();
+ sessionStart=Date.now();
+ timerRunning=true; renderTimer();
+ interval=setInterval(()=>{
+   timerSeconds--; localStorage.setItem('studyflow_timer',timerSeconds);
+   renderTimer();
+   if(timerSeconds<=0){clearInterval(interval);timerRunning=false;completeSession();alert('Focus session complete!');}
+ },1000);
+}
+function completeSession(){
+ const planned=Number($('duration').value||25);
+ const elapsed=planned; // full completed timer
+ sessions.push({id:Date.now(),date:new Date().toISOString(),minutes:elapsed,subject:$('subject').value.trim()||'Uncategorized',notes:$('notes').value.trim()});
+ localStorage.setItem(KEY,JSON.stringify(sessions));
+ timerSeconds=Math.max(1,Number($('duration').value||25))*60;localStorage.setItem('studyflow_timer',timerSeconds);
+ renderAll();renderTimer();
+}
+function dayDiff(a,b){return Math.round((new Date(b)-new Date(a))/86400000)}
+function getDayMinutes(key){return sessions.filter(s=>dateKey(s.date)===key).reduce((a,s)=>a+s.minutes,0)}
+function streak(){
+ let d=new Date(); let key=dateKey(d); let count=0;
+ if(getDayMinutes(key)===0){d.setDate(d.getDate()-1);key=dateKey(d);if(getDayMinutes(key)===0)return 0}
+ while(getDayMinutes(key)>0){count++;d.setDate(d.getDate()-1);key=dateKey(d)}
+ return count;
+}
+function renderKPIs(){
+ const today=getDayMinutes(todayKey());
+ let week=0;for(let i=0;i<7;i++){let d=new Date();d.setDate(d.getDate()-i);week+=getDayMinutes(dateKey(d))}
+ $('kToday').textContent=fmtMin(today);$('kWeek').textContent=(week/60).toFixed(1)+'h';$('kSessions').textContent=sessions.length;$('kStreak').textContent=streak();
+}
+function makeChart(targetId,days=7){
+ const el=$(targetId);el.innerHTML='';let vals=[];
+ for(let i=days-1;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);vals.push({key:dateKey(d),label:d.toLocaleDateString(undefined,{weekday:'short'}),v:getDayMinutes(dateKey(d))})}
+ const max=Math.max(60,...vals.map(x=>x.v));
+ vals.forEach(x=>{const w=document.createElement('div');w.className='bar-wrap';w.innerHTML=`<div class="bar-value">${x.v?fmtMin(x.v):''}</div><div class="bar" style="height:${Math.max(2,x.v/max*88)}%"></div><div class="bar-label">${x.label}</div>`;el.appendChild(w)})
+}
+function tableHTML(list){
+ if(!list.length)return '<div class="empty">No study sessions yet. Start your first session above.</div>';
+ return `<table class="table"><thead><tr><th>Date</th><th>Subject</th><th>Duration</th><th>Notes</th></tr></thead><tbody>${list.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).map(s=>`<tr><td>${new Date(s.date).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</td><td><span class="pill">${esc(s.subject)}</span></td><td>${fmtMin(s.minutes)}</td><td>${esc(s.notes||'—')}</td></tr>`).join('')}</tbody></table>`;
+}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function renderRecent(){$('recent').innerHTML=tableHTML(sessions.slice().sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,6))}
+function renderHistory(){$('fullHistory').innerHTML=tableHTML(sessions)}
+function renderAnalytics(){
+ const total=sessions.reduce((a,s)=>a+s.minutes,0);$('aTotal').textContent=fmtMin(total);$('aAvg').textContent=fmtMin(sessions.length?total/sessions.length:0);
+ const map={};sessions.forEach(s=>map[s.subject]=(map[s.subject]||0)+s.minutes);const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]);const mx=arr[0]?.[1]||1;
+ $('subjects').innerHTML=arr.length?arr.slice(0,10).map(([n,v])=>`<div class="subject"><span>${esc(n)}</span><div class="progress"><i style="width:${v/mx*100}%"></i></div><b>${fmtMin(v)}</b></div>`).join(''):'<div class="empty">No subject data yet.</div>';
+ $('heatmap').innerHTML='';for(let i=27;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);let v=getDayMinutes(dateKey(d));let c=v>=180?'l4':v>=120?'l3':v>=60?'l2':v>0?'l1':'';let x=document.createElement('div');x.className='day '+c;x.title=`${dateKey(d)} — ${fmtMin(v)}`;$('heatmap').appendChild(x)}
+ makeChart('analyticsChart',14);
+}
+function renderAll(){
+ $('today').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+ renderKPIs();makeChart('weekChart',7);renderRecent();renderHistory();renderAnalytics();
+}
+function clearHistory(){if(confirm('Delete all study history? This cannot be undone.')){sessions=[];localStorage.removeItem(KEY);renderAll()}}
+function exportData(){
+ const blob=new Blob([JSON.stringify({app:'StudyFlow',version:1,exportedAt:new Date().toISOString(),sessions},null,2)],{type:'application/json'});
+ const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='studyflow-history.json';a.click();URL.revokeObjectURL(a.href);
+}
+function importData(e){
+ const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!Array.isArray(d.sessions))throw Error();sessions=d.sessions;save();alert('History imported successfully.')}catch{alert('Invalid StudyFlow JSON file.')}};r.readAsText(f)
+}
+$('duration').addEventListener('change',()=>{if(!timerRunning)resetTimer()});
+$('defaultDuration').addEventListener('change',()=>{localStorage.setItem('studyflow_default',Math.max(1,Number($('defaultDuration').value||25)));if(!timerRunning){ $('duration').value=$('defaultDuration').value;resetTimer()}});
+const def=Number(localStorage.getItem('studyflow_default')||25);$('defaultDuration').value=def;$('duration').value=def;
+if(!localStorage.getItem('studyflow_timer'))timerSeconds=def*60;
+renderTimer();renderAll();
+window.addEventListener('beforeunload',()=>localStorage.setItem('studyflow_timer',timerSeconds));
+</script>
+</body>
+</html>
