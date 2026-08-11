@@ -76,10 +76,10 @@ input{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:1
     <div class="card timer-card">
       <div class="timer-label">FOCUS SESSION</div>
       <div class="timer" id="timer">25:00</div>
-      <div class="timer-controls"><button class="btn secondary" onclick="resetTimer()">Reset</button><button class="btn primary" id="startBtn" onclick="toggleTimer()">Start</button></div>
+      <div class="timer-controls"><button class="btn secondary" onclick="resetTimer()">Reset</button><button class="btn primary" id="startBtn" onclick="toggleTimer()">Start</button><button class="btn secondary" id="saveBtn" onclick="savePartialSession()" disabled>Save Session</button></div>
       <div class="session-row">
         <div><label>Subject</label><input id="subject" placeholder="e.g. Financial Reporting"></div>
-        <div><label>Duration (minutes)</label><input id="duration" type="number" min="1" value="25"></div>
+        <div><label>Duration (minutes)</label><input id="duration" type="number" min="1" step="1" value="25"></div>
       </div>
       <div style="margin-top:12px;text-align:left"><label class="notes-label">Notes (optional)</label><input id="notes" placeholder="What are you studying?"></div>
     </div>
@@ -100,7 +100,7 @@ input{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:1
 
 <section id="history" class="view"><div class="card history" style="margin-top:0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h2 class="section-title" style="margin:0">Cloud study history</h2><button class="danger-link" style="color:#c33;background:none;font-size:12px;padding:5px" onclick="deleteAllSessions()">Delete all</button></div><div id="fullHistory"></div></div></section>
 
-<section id="settings" class="view"><div class="card analytics-card"><h2 class="section-title">Account & settings</h2><div class="settings-row"><div><b>Signed-in account</b><div class="subtitle" id="settingsEmail"></div></div></div><div class="settings-row"><div><b>Default timer</b><div class="subtitle">Minutes used when you reset</div></div><input id="defaultDuration" type="number" min="1" value="25" style="width:100px"></div><div class="settings-row"><div><b>Export cloud history</b><div class="subtitle">Download your sessions as JSON</div></div><button class="btn secondary" onclick="exportData()">Export</button></div><div class="settings-row"><div><b>Sign out</b><div class="subtitle">Your cloud data remains saved</div></div><button class="btn secondary" onclick="logout()">Log out</button></div></div></section>
+<section id="settings" class="view"><div class="card analytics-card"><h2 class="section-title">Account & settings</h2><div class="settings-row"><div><b>Signed-in account</b><div class="subtitle" id="settingsEmail"></div></div></div><div class="settings-row"><div><b>Default timer</b><div class="subtitle">Minutes used when you reset</div></div><input id="defaultDuration" type="number" min="1" step="1" value="25" style="width:100px"></div><div class="settings-row"><div><b>Export cloud history</b><div class="subtitle">Download your sessions as JSON</div></div><button class="btn secondary" onclick="exportData()">Export</button></div><div class="settings-row"><div><b>Sign out</b><div class="subtitle">Your cloud data remains saved</div></div><button class="btn secondary" onclick="logout()">Log out</button></div></div></section>
 </main></div>
 
 <script>
@@ -117,7 +117,7 @@ const SUPABASE_URL = "https://tfufehjjbggqqjhgfgde.supabase.co";
 const SUPABASE_PROJECT_URL = SUPABASE_URL.replace(/\/rest\/v1\/?$/, "").replace(/\/$/, "");
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmdWZlaGpqYmdncXFqaGdmZ2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NjMwMTUsImV4cCI6MjEwMjAzOTAxNX0.jTMOzomIdbb-AodEYfKeirn0MZ5nX91H5aQGL18EVcY";
 
-let db=null,currentUser=null,sessions=[],timerSeconds=1500,timerRunning=false,interval=null,signupMode=false;
+let db=null,currentUser=null,sessions=[],timerSeconds=1500,timerRunning=false,interval=null,signupMode=false,sessionInitialSeconds=1500;
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const fmtMin=m=>m<60?`${Math.round(m)}m`:`${Math.floor(m/60)}h ${Math.round(m%60)}m`;
@@ -174,27 +174,56 @@ async function loadSessions(){
  if(error){$("syncStatus").textContent="⚠ Sync error";console.error(error);return}
  sessions=data||[];$("syncStatus").textContent="☁ Cloud synced";
 }
-async function saveSession(){
- const subject=$("subject").value.trim()||"Uncategorized",notes=$("notes").value.trim(),minutes=Number($("duration").value||25);
+async function saveSession(minutes){
+ const subject=$("subject").value.trim()||"Uncategorized",notes=$("notes").value.trim();
+ minutes=Math.max(1,Math.round(Number(minutes)));
  $("syncStatus").textContent="☁ Saving…";
  const {data,error}=await db.from("study_sessions").insert({user_id:currentUser.id,subject,minutes,notes}).select("id,created_at,subject,minutes,notes").single();
- if(error){$("syncStatus").textContent="⚠ Save failed";alert("Could not save this session to the cloud. Check your Supabase table/RLS policies.");console.error(error);return false}
+ if(error){$("syncStatus").textContent="⚠ Save failed";alert("Cloud save failed: "+(error.message||"Unknown Supabase error"));console.error("Supabase insert error:",error);return false}
  sessions.unshift(data);$("syncStatus").textContent="☁ Cloud synced";renderAll();return true;
 }
-function renderTimer(){$("timer").textContent=`${pad(Math.floor(timerSeconds/60))}:${pad(timerSeconds%60)}`;$("startBtn").textContent=timerRunning?"Pause":"Start"}
-function resetTimer(){clearInterval(interval);timerRunning=false;timerSeconds=Math.max(1,Number($("duration").value||25))*60;localStorage.setItem("studyflow_timer",timerSeconds);renderTimer()}
+function renderTimer(){
+ $("timer").textContent=`${pad(Math.floor(timerSeconds/60))}:${pad(timerSeconds%60)}`;
+ $("startBtn").textContent=timerRunning?"Pause":"Start";
+ const elapsed=Math.max(0,sessionInitialSeconds-timerSeconds);
+ $("saveBtn").disabled=elapsed<60;
+}
+function resetTimer(){clearInterval(interval);timerRunning=false;const mins=Math.max(1,Math.round(Number($("duration").value||25)));$("duration").value=mins;timerSeconds=mins*60;sessionInitialSeconds=timerSeconds;localStorage.setItem("studyflow_timer",timerSeconds);renderTimer()}
 function toggleTimer(){
  if(timerRunning){clearInterval(interval);timerRunning=false;renderTimer();return}
  if(timerSeconds<=0)resetTimer();
  timerRunning=true;renderTimer();
  interval=setInterval(async()=>{
    timerSeconds--;localStorage.setItem("studyflow_timer",timerSeconds);renderTimer();
-   if(timerSeconds<=0){clearInterval(interval);timerRunning=false;renderTimer();const ok=await saveSession();alert(ok?"Focus session complete and saved to the cloud!":"Focus session complete, but it could not be saved.");resetTimer()}
+   if(timerSeconds<=0){
+     clearInterval(interval);timerRunning=false;
+     const ok=await saveSession(Math.round(sessionInitialSeconds/60));
+     alert(ok?"Focus session complete and saved to the cloud!":"Focus session complete, but it could not be saved.");
+     resetTimer();
+   }
  },1000);
 }
-$("duration").addEventListener("change",()=>{if(!timerRunning)resetTimer()});
+async function savePartialSession(){
+ const elapsedSeconds=Math.max(0,sessionInitialSeconds-timerSeconds);
+ const elapsedMinutes=Math.floor(elapsedSeconds/60);
+ if(elapsedMinutes<1){alert("Study for at least 1 minute before saving.");return}
+ const wasRunning=timerRunning;
+ clearInterval(interval);timerRunning=false;renderTimer();
+ const ok=await saveSession(elapsedMinutes);
+ if(ok){
+   alert(`Saved ${fmtMin(elapsedMinutes)} of focused study time.`);
+   resetTimer();
+ }
+ else{
+   if(wasRunning){timerRunning=true;renderTimer();interval=setInterval(async()=>{
+     timerSeconds--;localStorage.setItem("studyflow_timer",timerSeconds);renderTimer();
+     if(timerSeconds<=0){clearInterval(interval);timerRunning=false;const done=await saveSession(Math.round(sessionInitialSeconds/60));alert(done?"Focus session complete and saved to the cloud!":"Focus session complete, but it could not be saved.");resetTimer()}
+   },1000)}
+ }
+}
+$("duration").addEventListener("change",()=>{let v=Math.max(1,Math.round(Number($("duration").value||25)));$("duration").value=v;if(!timerRunning)resetTimer()});
 $("defaultDuration").addEventListener("change",()=>{const v=Math.max(1,Number($("defaultDuration").value||25));localStorage.setItem("studyflow_default",v);$("duration").value=v;if(!timerRunning)resetTimer()});
-function loadSettings(){const d=Number(localStorage.getItem("studyflow_default")||25);$("defaultDuration").value=d;$("duration").value=d;if(!localStorage.getItem("studyflow_timer"))timerSeconds=d*60;else timerSeconds=Number(localStorage.getItem("studyflow_timer"));renderTimer()}
+function loadSettings(){const d=Number(localStorage.getItem("studyflow_default")||25);$("defaultDuration").value=d;$("duration").value=d;if(!localStorage.getItem("studyflow_timer"))timerSeconds=d*60;else timerSeconds=Number(localStorage.getItem("studyflow_timer"));sessionInitialSeconds=d*60;renderTimer()}
 function getDayMinutes(key){return sessions.filter(s=>dateKey(s.created_at)===key).reduce((a,s)=>a+Number(s.minutes),0)}
 function streak(){
  let d=new Date(),key=dateKey(d),count=0;
