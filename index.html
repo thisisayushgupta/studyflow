@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>StudyFlow — Cloud Study Tracker</title>
+<title>StudyFlow — Study Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#f5f5f7;--card:#fff;--text:#171717;--muted:#737373;--line:#e8e8eb;--black:#111;--green:#20a36a;--red:#d43d3d}
@@ -365,6 +365,348 @@ input{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:1
   .kpi .n {
     font-size: 22px;
   }
+}
+
+
+/* =========================================================
+   STUDYFLOW — CLEAN MOBILE UI
+   ========================================================= */
+:root{
+  --bg:#f7f7f8;
+  --surface:#ffffff;
+  --surface-2:#f2f2f4;
+  --ink:#111111;
+  --muted:#7b7b80;
+  --line:#e7e7ea;
+  --accent:#111111;
+  --success:#159b63;
+  --radius:22px;
+}
+
+@media (max-width:700px){
+  body{
+    background:var(--bg);
+    color:var(--ink);
+  }
+
+  .main{
+    padding:18px 16px calc(94px + env(safe-area-inset-bottom));
+  }
+
+  /* Compact header */
+  .top{
+    margin:4px 2px 22px;
+    display:grid;
+    grid-template-columns:1fr auto;
+    column-gap:12px;
+    align-items:start;
+  }
+
+  h1{
+    font-size:30px;
+    line-height:1.02;
+    font-weight:800;
+    letter-spacing:-1.35px;
+    margin:0;
+  }
+
+  .top .subtitle{
+    margin-top:7px;
+    color:#77777c;
+    font-size:14px;
+  }
+
+  .sync{
+    margin-top:8px;
+    color:#77777c;
+    font-size:11px;
+  }
+
+  .date{
+    color:#6f6f74;
+    font-size:11px;
+    line-height:1.3;
+    text-align:right;
+    max-width:92px;
+  }
+
+  /* KPI cards — lighter and less bulky */
+  .kpis{
+    gap:10px;
+    margin-bottom:14px;
+  }
+
+  .kpi{
+    padding:16px;
+    min-height:106px;
+    border:1px solid var(--line);
+    border-radius:18px;
+    box-shadow:0 2px 8px rgba(0,0,0,.025);
+  }
+
+  .kpi .l{
+    color:#77777c;
+    font-size:11px;
+    font-weight:650;
+  }
+
+  .kpi .n{
+    margin-top:7px;
+    font-size:27px;
+    line-height:1;
+    letter-spacing:-.8px;
+    font-weight:800;
+  }
+
+  .kpi .delta{
+    margin-top:7px;
+    color:var(--success);
+    font-size:10px;
+    font-weight:650;
+  }
+
+  /* Main timer card */
+  .grid{
+    gap:14px;
+  }
+
+  .timer-card{
+    padding:27px 16px 18px;
+    border-radius:24px;
+    border:1px solid var(--line);
+    box-shadow:0 4px 18px rgba(0,0,0,.035);
+  }
+
+  .timer-label{
+    color:#8a8a8f;
+    font-size:10px;
+    font-weight:750;
+    letter-spacing:1.7px;
+  }
+
+  .timer{
+    margin:18px 0 22px;
+    font-size:clamp(60px,18vw,78px);
+    font-weight:750;
+    letter-spacing:-4px;
+    line-height:.95;
+  }
+
+  /* Three controls with consistent visual hierarchy */
+  .timer-controls{
+    display:grid;
+    grid-template-columns:1fr 1.05fr 1.18fr;
+    gap:8px;
+  }
+
+  .timer-controls .btn{
+    min-height:50px;
+    padding:10px 6px;
+    border-radius:13px;
+    font-size:13px;
+    font-weight:750;
+  }
+
+  .timer-controls .primary{
+    box-shadow:0 3px 8px rgba(0,0,0,.12);
+  }
+
+  #saveSessionBtn:disabled{
+    opacity:.42;
+    cursor:not-allowed;
+  }
+
+  /* Inputs */
+  .session-row{
+    margin-top:20px;
+    gap:12px;
+  }
+
+  .session-row label,
+  .notes-label{
+    color:#77777c;
+    font-size:11px;
+    font-weight:700;
+  }
+
+  input{
+    min-height:48px;
+    background:#f8f8f9;
+    border:1px solid #e5e5e8;
+    border-radius:13px;
+    padding:12px 13px;
+    font-size:16px;
+    color:#111;
+  }
+
+  input::placeholder{
+    color:#aaaab0;
+  }
+
+  input:focus{
+    background:#fff;
+    border-color:#bcbcc1;
+    box-shadow:0 0 0 3px rgba(0,0,0,.045);
+  }
+
+  /* Secondary cards */
+  .cardpad,
+  .history,
+  .analytics-card{
+    border-radius:20px;
+    border:1px solid var(--line);
+    box-shadow:0 2px 12px rgba(0,0,0,.025);
+  }
+
+  .cardpad{
+    padding:18px;
+  }
+
+  .section-title{
+    font-size:16px;
+    font-weight:750;
+  }
+
+  /* Bottom navigation — minimal iOS-style */
+  .sidebar{
+    height:calc(72px + env(safe-area-inset-bottom));
+    padding:0 10px env(safe-area-inset-bottom);
+    background:rgba(18,18,18,.94);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    box-shadow:0 -5px 20px rgba(0,0,0,.12);
+  }
+
+  .nav{
+    height:72px;
+    gap:2px;
+  }
+
+  .nav button{
+    position:relative;
+    height:58px;
+    margin:7px 0 0;
+    padding:4px 2px;
+    border-radius:15px;
+    color:#8e8e93;
+    font-size:9px;
+    font-weight:650;
+    gap:2px;
+  }
+
+  .nav button.active{
+    background:#292929;
+    color:#fff;
+  }
+
+  .nav button::before{
+    opacity:.9;
+  }
+
+  /* Chart */
+  .chart{
+    height:160px;
+    gap:5px;
+    padding-top:20px;
+  }
+
+  .bar{
+    width:24px;
+    border-radius:7px 7px 3px 3px;
+  }
+
+  .bar-value{
+    font-size:8px;
+  }
+
+  .bar-label{
+    font-size:8px;
+    bottom:-21px;
+  }
+
+  /* History: turn each row into a clean compact card */
+  .table thead{display:none}
+  .table,
+  .table tbody,
+  .table tr,
+  .table td{
+    display:block;
+    width:100%;
+  }
+
+  .table tr{
+    position:relative;
+    padding:12px 0;
+    border-bottom:1px solid #eeeeef;
+  }
+
+  .table tr:last-child{
+    border-bottom:0;
+  }
+
+  .table td{
+    padding:2px 0;
+    border:0;
+  }
+
+  .table td:nth-child(1){
+    color:#99999e;
+    font-size:10px;
+  }
+
+  .table td:nth-child(2){
+    margin-top:2px;
+    font-size:13px;
+    font-weight:750;
+  }
+
+  .table td:nth-child(3){
+    color:#55555a;
+    font-size:11px;
+    font-weight:700;
+  }
+
+  .table td:nth-child(4){
+    color:#99999e;
+    font-size:10px;
+  }
+
+  /* Analytics */
+  .analytics-grid{
+    gap:12px;
+  }
+
+  .big-number{
+    font-size:38px;
+    letter-spacing:-1.5px;
+  }
+
+  .subject{
+    grid-template-columns:100px 1fr 42px;
+    gap:7px;
+    font-size:11px;
+  }
+
+  /* Settings */
+  .settings-row{
+    padding:14px 0;
+  }
+
+  /* Avoid iOS input zoom */
+  input,button,select{
+    font-size:16px;
+  }
+}
+
+/* Smallest screens */
+@media(max-width:380px){
+  .main{padding-left:12px;padding-right:12px}
+  h1{font-size:27px}
+  .timer{font-size:58px}
+  .timer-controls{grid-template-columns:1fr 1.05fr 1.15fr}
+  .timer-controls .btn{font-size:12px}
+  .kpi{padding:14px;min-height:100px}
+  .kpi .n{font-size:24px}
 }
 
 </style>
