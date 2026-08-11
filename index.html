@@ -714,23 +714,42 @@ input{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:1
 #saveBtn:disabled{opacity:.45;cursor:not-allowed}
 #saveBtn:not(:disabled){box-shadow:0 2px 8px rgba(0,0,0,.08)}
 </style>
+<style>
+/* Google-only authentication */
+.google-only-auth{text-align:left;max-width:440px}
+.auth-mark{width:48px;height:48px;border-radius:15px;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;margin:30px 0 18px}
+.google-only-auth h1{margin:0 0 8px;font-size:27px;letter-spacing:-.7px}
+.google-login{width:100%;min-height:54px;margin-top:25px;border:1px solid #d9d9dd;border-radius:13px;background:#fff;color:#171717;display:flex;align-items:center;justify-content:center;gap:11px;font-size:15px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.04);transition:.15s}
+.google-login:hover{background:#fafafa;border-color:#c9c9ce;box-shadow:0 4px 12px rgba(0,0,0,.07)}
+.google-login:active{transform:translateY(1px)}
+.google-icon{display:flex;align-items:center}
+.google-note{text-align:center;color:#8a8a90;font-size:11px;line-height:1.55;margin-top:15px}
+@media(max-width:700px){
+ .auth-screen{padding:18px}
+ .auth-card.google-only-auth{padding:27px 22px;border-radius:22px}
+ .google-only-auth h1{font-size:24px}
+ .auth-mark{margin-top:22px}
+}
+</style>
 </head>
 <body>
 
 <div id="authScreen" class="auth-screen">
-  <div class="auth-card">
+  <div class="auth-card google-only-auth">
     <div class="auth-brand">Study<span>Flow</span></div>
-    <h1 id="authTitle">Welcome back</h1>
-    <div class="subtitle" id="authSubtitle">Sign in to sync your study history across devices.</div>
-    <form id="authForm">
-      <label>Email</label><input id="authEmail" type="email" required placeholder="you@example.com">
-      <label>Password</label><input id="authPassword" type="password" required minlength="6" placeholder="Minimum 6 characters">
-      <button class="btn primary" id="authButton" type="submit">Log in</button>
-    </form>
+    <div class="auth-mark">◉</div>
+    <h1>Welcome to StudyFlow</h1>
+    <div class="subtitle">Track your study time, build consistency, and sync your history across devices.</div>
+    <button class="google-login" id="googleBtn" type="button">
+      <span class="google-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M21.35 12.23c0-.7-.06-1.38-.18-2.03H12v3.84h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.2z"/><path fill="#34A853" d="M12 21.75c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.7-1.72-5.47-4.03H3.28v2.53A9.75 9.75 0 0 0 12 21.75z"/><path fill="#FBBC05" d="M6.53 13.84A5.86 5.86 0 0 1 6.22 12c0-.64.11-1.26.31-1.84V7.63H3.28A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.06 1.03 4.37l3.25-2.53z"/><path fill="#EA4335" d="M12 6.13c1.43 0 2.72.49 3.73 1.45l2.8-2.8C16.84 3.16 14.63 2.25 12 2.25a9.75 9.75 0 0 0-8.72 5.38l3.25 2.53C7.3 7.85 9.46 6.13 12 6.13z"/></svg>
+      </span>
+      <span>Continue with Google</span>
+    </button>
+    <div class="google-note">Use your Google account to securely sign in.<br>Your study history stays tied to your account.</div>
     <div id="authError" class="msg error"></div>
     <div id="authSuccess" class="msg success"></div>
-    <div id="configWarning" class="warning hidden">Supabase is not configured. Replace the two placeholders in the JavaScript section before publishing.</div>
-    <div class="auth-switch"><span id="switchText">Don't have an account?</span> <button class="link" id="switchBtn" type="button">Sign up</button></div>
+    <div id="configWarning" class="warning hidden">Supabase is not configured. Check the project URL and anon key in the JavaScript section.</div>
   </div>
 </div>
 
@@ -801,7 +820,7 @@ const SUPABASE_URL = "https://tfufehjjbggqqjhgfgde.supabase.co";
 const SUPABASE_PROJECT_URL = SUPABASE_URL.replace(/\/rest\/v1\/?$/, "").replace(/\/$/, "");
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmdWZlaGpqYmdncXFqaGdmZ2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NjMwMTUsImV4cCI6MjEwMjAzOTAxNX0.jTMOzomIdbb-AodEYfKeirn0MZ5nX91H5aQGL18EVcY";
 
-let db=null,currentUser=null,sessions=[],timerSeconds=1500,timerRunning=false,interval=null,signupMode=false,sessionInitialSeconds=1500,sessionElapsedSeconds=0,sessionSaving=false,sessionStartedAt=null,sessionAccumulatedSeconds=0;
+let db=null,currentUser=null,sessions=[],timerSeconds=1500,timerRunning=false,interval=null,sessionInitialSeconds=1500,sessionElapsedSeconds=0,sessionSaving=false,sessionStartedAt=null,sessionAccumulatedSeconds=0;
 const $=id=>document.getElementById(id);
 const pad=n=>String(n).padStart(2,"0");
 const fmtMin=m=>m<60?`${Math.round(m)}m`:`${Math.floor(m/60)}h ${Math.round(m%60)}m`;
@@ -812,33 +831,23 @@ function configured(){return SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.
 function msg(type,text){$("authError").style.display=type==="error"?"block":"none";$("authSuccess").style.display=type==="success"?"block":"none";if(type==="error")$("authError").textContent=text;if(type==="success")$("authSuccess").textContent=text}
 function clearMsg(){msg("none","")}
 
-$("switchBtn").onclick=()=>{
- signupMode=!signupMode;clearMsg();
- $("authTitle").textContent=signupMode?"Create your account":"Welcome back";
- $("authSubtitle").textContent=signupMode?"Create an account to sync your study history across devices.":"Sign in to sync your study history across devices.";
- $("authButton").textContent=signupMode?"Create account":"Log in";
- $("switchText").textContent=signupMode?"Already have an account?":"Don't have an account?";
- $("switchBtn").textContent=signupMode?"Log in":"Sign up";
-};
-
-$("authForm").addEventListener("submit",async e=>{
- e.preventDefault();clearMsg();
- if(!db){msg("error","Supabase is not configured yet.");return}
- const email=$("authEmail").value.trim(),password=$("authPassword").value;
- $("authForm").classList.add("loading");
- try{
-   if(signupMode){
-     const {data,error}=await db.auth.signUp({email,password});
-     if(error)throw error;
-     if(data.session){await startApp(data.user)}
-     else msg("success","Account created. Check your email to confirm your account, then log in.");
-   }else{
-     const {data,error}=await db.auth.signInWithPassword({email,password});
-     if(error)throw error;
-     await startApp(data.user);
-   }
- }catch(err){msg("error",err.message||"Authentication failed.")}
- finally{$("authForm").classList.remove("loading")}
+$("googleBtn").addEventListener("click",async()=>{
+  clearMsg();
+  if(!db){msg("error","Supabase is not configured yet.");return}
+  const btn=$("googleBtn");
+  btn.disabled=true;
+  btn.innerHTML='<span class="google-icon">Loading…</span>';
+  try{
+    const {error}=await db.auth.signInWithOAuth({
+      provider:"google",
+      options:{redirectTo:"https://thisisayushgupta.github.io/studyflow/"}
+    });
+    if(error)throw error;
+  }catch(err){
+    msg("error",err.message||"Could not start Google sign-in.");
+    btn.disabled=false;
+    btn.innerHTML='<span class="google-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M21.35 12.23c0-.7-.06-1.38-.18-2.03H12v3.84h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.2z"/><path fill="#34A853" d="M12 21.75c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.7-1.72-5.47-4.03H3.28v2.53A9.75 9.75 0 0 0 12 21.75z"/><path fill="#FBBC05" d="M6.53 13.84A5.86 5.86 0 0 1 6.22 12c0-.64.11-1.26.31-1.84V7.63H3.28A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.06 1.03 4.37l3.25-2.53z"/><path fill="#EA4335" d="M12 6.13c1.43 0 2.72.49 3.73 1.45l2.8-2.8C16.84 3.16 14.63 2.25 12 2.25a9.75 9.75 0 0 0-8.72 5.38l3.25 2.53C7.3 7.85 9.46 6.13 12 6.13z"/></svg></span><span>Continue with Google</span>';
+  }
 });
 
 async function startApp(user){
@@ -1109,7 +1118,7 @@ function exportData(){
 window.addEventListener("beforeunload",()=>{localStorage.setItem("studyflow_timer",timerSeconds);localStorage.setItem("studyflow_elapsed",sessionElapsedSeconds)});
 
 async function boot(){
- if(!configured()){$("configWarning").classList.remove("hidden");$("authButton").disabled=true;return}
+ if(!configured()){$("configWarning").classList.remove("hidden");$("googleBtn").disabled=true;return}
  db=window.supabase.createClient(SUPABASE_PROJECT_URL,SUPABASE_ANON_KEY);
  const {data:{session}}=await db.auth.getSession();
  if(session)await startApp(session.user);
