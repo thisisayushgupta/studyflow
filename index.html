@@ -713,6 +713,31 @@ input{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:1
 /* Save Session state */
 #saveBtn:disabled{opacity:.45;cursor:not-allowed}
 #saveBtn:not(:disabled){box-shadow:0 2px 8px rgba(0,0,0,.08)}
+
+.subject-select{
+  width:100%;
+  min-height:48px;
+  padding:12px 40px 12px 13px;
+  border:1px solid #e5e5e8;
+  border-radius:13px;
+  background:#f8f8f9;
+  color:#111;
+  font:inherit;
+  font-size:16px;
+  appearance:none;
+  -webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,#777 50%),linear-gradient(135deg,#777 50%,transparent 50%);
+  background-position:calc(100% - 18px) 21px,calc(100% - 12px) 21px;
+  background-size:6px 6px,6px 6px;
+  background-repeat:no-repeat;
+}
+.subject-select:focus{
+  outline:none;
+  background-color:#fff;
+  border-color:#bcbcc1;
+  box-shadow:0 0 0 3px rgba(0,0,0,.045);
+}
+
 </style>
 <style>
 /* Google-only authentication */
@@ -781,7 +806,10 @@ input{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:1
       <div class="timer" id="timer">25:00</div>
       <div class="timer-controls"><button class="btn secondary" onclick="resetTimer()">Reset</button><button class="btn primary" id="startBtn" onclick="toggleTimer()">Start</button><button class="btn secondary" id="saveBtn" onclick="savePartialSession()" disabled>Save Session</button></div>
       <div class="session-row">
-        <div><label>Subject</label><input id="subject" placeholder="e.g. Financial Reporting"></div>
+        <div>
+          <label>Subject</label>
+          <select id="subject" class="subject-select" aria-label="Study subject"></select>
+        </div>
         <div><label>Duration (minutes)</label><input id="duration" type="number" min="1" step="1" value="25"></div>
       </div>
       <div style="margin-top:12px;text-align:left"><label class="notes-label">Notes (optional)</label><input id="notes" placeholder="What are you studying?"></div>
@@ -828,6 +856,7 @@ const dateKey=d=>new Date(d).toLocaleDateString("en-CA");
 const todayKey=()=>dateKey(new Date());
 
 function configured(){return SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.includes("YOUR_")&&!SUPABASE_ANON_KEY.includes("YOUR_")}
+populateSubjects();
 function msg(type,text){$("authError").style.display=type==="error"?"block":"none";$("authSuccess").style.display=type==="success"?"block":"none";if(type==="error")$("authError").textContent=text;if(type==="success")$("authSuccess").textContent=text}
 function clearMsg(){msg("none","")}
 
@@ -865,10 +894,104 @@ async function loadSessions(){
  $("syncStatus").textContent="☁ Syncing…";
  const {data,error}=await db.from("study_sessions").select("id,created_at,subject,minutes,notes").order("created_at",{ascending:false});
  if(error){$("syncStatus").textContent="⚠ Sync error";console.error(error);return}
- sessions=data||[];$("syncStatus").textContent="☁ Cloud synced";
+ sessions=data||[];
+ populateSubjects();
+ $("syncStatus").textContent="☁ Cloud synced";
 }
+
+const DEFAULT_SUBJECTS = [
+  "Financial Reporting",
+  "Corporate Finance",
+  "Portfolio Management",
+  "Economics",
+  "Quantitative Methods",
+  "Fixed Income",
+  "Equity Investments",
+  "Derivatives",
+  "Alternative Investments",
+  "Ethical & Professional Standards",
+  "Audit",
+  "Taxation",
+  "Strategic Management"
+];
+
+function getSavedSubjects(){
+  try{
+    const saved=JSON.parse(localStorage.getItem("studyflow_subjects")||"null");
+    return Array.isArray(saved)?saved.filter(x=>typeof x==="string"&&x.trim()):[];
+  }catch(e){return []}
+}
+
+function saveSubjects(list){
+  const clean=[...new Set(list.map(x=>String(x).trim()).filter(Boolean))];
+  localStorage.setItem("studyflow_subjects",JSON.stringify(clean));
+  return clean;
+}
+
+function populateSubjects(preferred=""){
+  const select=$("subject");
+  if(!select)return;
+
+  const historySubjects=sessions.map(s=>s.subject||"").filter(Boolean);
+  const subjects=saveSubjects([
+    ...getSavedSubjects(),
+    ...DEFAULT_SUBJECTS,
+    ...historySubjects
+  ]);
+
+  const current=preferred || select.value || subjects[0] || "";
+  select.innerHTML="";
+  subjects.forEach(subject=>{
+    const option=document.createElement("option");
+    option.value=subject;
+    option.textContent=subject;
+    select.appendChild(option);
+  });
+
+  const create=document.createElement("option");
+  create.value="__create_new__";
+  create.textContent="＋ Create new subject";
+  select.appendChild(create);
+
+  if(subjects.includes(current)) select.value=current;
+  else if(subjects.length) select.value=subjects[0];
+}
+
+function createNewSubject(){
+  const name=prompt("Enter the new subject name:");
+  if(name===null)return;
+
+  const subject=name.trim();
+  if(!subject){
+    alert("Please enter a subject name.");
+    return;
+  }
+
+  const existing=getSavedSubjects();
+  const match=[...existing,...DEFAULT_SUBJECTS,...sessions.map(s=>s.subject||"")]
+    .find(x=>String(x).trim().toLowerCase()===subject.toLowerCase());
+
+  if(match){
+    populateSubjects(match);
+    return;
+  }
+
+  saveSubjects([...existing,subject]);
+  populateSubjects(subject);
+  $("syncStatus").textContent="☁ Subject added";
+}
+
+$("subject").addEventListener("change",()=>{
+  if($("subject").value==="__create_new__"){
+    const previous=getSavedSubjects()[0] || sessions[0]?.subject || DEFAULT_SUBJECTS[0] || "";
+    createNewSubject();
+    if(!$("subject").value || $("subject").value==="__create_new__") populateSubjects(previous);
+  }
+});
+
 async function saveSession(minutes){
  const subject=$("subject").value.trim()||"Uncategorized",notes=$("notes").value.trim();
+ saveSubjects([...getSavedSubjects(),subject]);
  minutes=Math.max(1,Math.round(Number(minutes)));
  $("syncStatus").textContent="☁ Saving…";
  const {data,error}=await db.from("study_sessions").insert({user_id:currentUser.id,subject,minutes,notes}).select("id,created_at,subject,minutes,notes").single();
