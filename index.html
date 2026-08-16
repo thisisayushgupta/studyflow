@@ -6,1249 +6,916 @@
 <title>StudyFlow — Study Tracker</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#f5f5f7;--card:#fff;--text:#171717;--muted:#737373;--line:#e8e8eb;--black:#111;--green:#20a36a;--red:#d43d3d}
-*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
-button,input{font:inherit}button{cursor:pointer;border:0}.hidden{display:none!important}
-.auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
-.auth-card{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:22px;padding:32px;box-shadow:0 15px 45px rgba(0,0,0,.08)}
-.auth-brand{font-size:27px;font-weight:800;letter-spacing:-1px}.auth-brand span,.brand span{color:#888}
-.auth-card h1{font-size:25px;margin:28px 0 7px}.subtitle{color:var(--muted);margin-top:5px}
-.auth-card label{display:block;font-size:12px;color:#777;font-weight:650;margin:15px 0 6px}
-input{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:10px;padding:11px 12px;outline:none}input:focus{border-color:#aaa;background:#fff}
-.btn{padding:12px 19px;border-radius:11px;font-weight:700}.primary{background:#111;color:#fff}.secondary{background:#f0f0f2;color:#222}.danger{background:#fff0f0;color:#c33}
-.auth-card .btn{width:100%;margin-top:18px}.auth-switch{text-align:center;margin-top:18px;font-size:13px;color:#777}.link{background:none;color:#111;text-decoration:underline;padding:0;font-weight:700}
-.msg{display:none;border-radius:10px;padding:10px 12px;font-size:12px;margin-top:12px}.error{background:#fff0f0;color:#a22}.success{background:#eefaf4;color:#187a4c}
-.warning{background:#fff8e6;color:#7a5a00;border:1px solid #f0d78a;padding:12px;border-radius:12px;font-size:12px;margin-top:15px}
-.app{display:flex;min-height:100vh}.sidebar{width:235px;background:#111;color:#fff;padding:26px 16px;position:fixed;inset:0 auto 0 0}.brand{font-size:21px;font-weight:750;padding:0 12px 28px}.nav button{display:block;width:100%;text-align:left;background:transparent;color:#aaa;padding:12px 13px;border-radius:11px;margin:4px 0;font-weight:600}.nav button.active,.nav button:hover{background:#252525;color:#fff}
-.userbox{position:absolute;bottom:22px;left:20px;right:20px;border-top:1px solid #2d2d2d;padding-top:15px}.useremail{font-size:11px;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.logout{margin-top:9px;background:#242424;color:#ddd;border-radius:9px;padding:8px 11px;font-size:11px}
-.main{margin-left:235px;width:calc(100% - 235px);padding:32px 42px 50px;max-width:1500px}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}h1{font-size:31px;margin:0;letter-spacing:-1px}.date{color:#666;font-size:14px}
-.view{display:none}.view.active{display:block}.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}.kpi,.card{background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 3px 15px rgba(0,0,0,.025)}.kpi{padding:18px}.kpi .n{font-size:28px;font-weight:750;margin-top:7px}.kpi .l{font-size:12px;color:#777;font-weight:650}.kpi .delta{font-size:11px;color:var(--green);margin-top:5px}
-.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:20px}.timer-card{text-align:center;padding:34px 28px}.timer-label{color:#777;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px}.timer{font-variant-numeric:tabular-nums;font-size:92px;line-height:1;margin:24px 0 22px;letter-spacing:-5px;font-weight:650}.timer-controls{display:flex;justify-content:center;gap:10px}.session-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:24px;text-align:left}.session-row label,.notes-label{font-size:12px;color:#777;font-weight:650;display:block;margin-bottom:6px}
-.cardpad{padding:22px}.section-title{font-size:17px;font-weight:750;margin:0 0 16px}.chart{height:220px;display:flex;align-items:end;gap:10px;padding-top:15px}.bar-wrap{height:100%;flex:1;display:flex;align-items:end;justify-content:center;position:relative}.bar{width:min(42px,75%);min-height:3px;border-radius:8px 8px 3px 3px;background:#111}.bar-label{position:absolute;bottom:-24px;font-size:11px;color:#888}.bar-value{position:absolute;top:-18px;font-size:10px;color:#666}.history{margin-top:20px;padding:22px}.table{width:100%;border-collapse:collapse;font-size:13px}.table th{text-align:left;color:#888;font-size:11px;text-transform:uppercase;letter-spacing:.6px;padding:10px 8px;border-bottom:1px solid var(--line)}.table td{padding:13px 8px;border-bottom:1px solid #f0f0f0}.pill{display:inline-block;background:#f1f1f3;border-radius:99px;padding:5px 9px;font-size:11px;font-weight:700}.empty{text-align:center;padding:42px;color:#888}
-.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.analytics-card{padding:22px}.big-number{font-size:44px;font-weight:780;letter-spacing:-2px;margin:5px 0}.subjects{display:flex;flex-direction:column;gap:13px}.subject{display:grid;grid-template-columns:120px 1fr 55px;align-items:center;gap:10px;font-size:13px}.progress{height:8px;background:#eee;border-radius:99px;overflow:hidden}.progress i{display:block;height:100%;border-radius:99px;background:#111}.streak{display:flex;gap:5px;flex-wrap:wrap;margin-top:18px}.day{width:14px;height:14px;border-radius:3px;background:#e8e8e8}.day.l1{background:#cfcfcf}.day.l2{background:#999}.day.l3{background:#555}.day.l4{background:#111}.settings-row{display:flex;justify-content:space-between;align-items:center;padding:17px 0;border-bottom:1px solid var(--line)}
-.sync{font-size:11px;color:#777;margin-top:8px}
-.history-delete{background:none;color:#c33;font-size:12px;font-weight:650;padding:6px 8px;border-radius:7px}
-.history-delete:hover{background:#fff0f0}
-.table th:last-child,.table td:last-child{text-align:right;width:80px}
-@media(max-width:600px){.table th:last-child,.table td:last-child{display:table-cell;width:55px}.history-delete{font-size:0}.history-delete:after{content:"×";font-size:18px}}
-.loading{opacity:.6;pointer-events:none}
-@media(max-width:900px){.sidebar{width:70px}.brand{font-size:0}.brand:after{content:"S";font-size:22px}.nav button{font-size:0;text-align:center}.nav button:nth-child(1):before{content:"◉";font-size:18px}.nav button:nth-child(2):before{content:"▦";font-size:18px}.nav button:nth-child(3):before{content:"◷";font-size:18px}.nav button:nth-child(4):before{content:"⚙";font-size:18px}.main{margin-left:70px;width:calc(100% - 70px);padding:25px}.grid,.analytics-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.userbox{display:none}}
-@media(max-width:600px){.main{padding:18px}.timer{font-size:65px}.session-row{grid-template-columns:1fr}.table{font-size:11px}.table th:nth-child(4),.table td:nth-child(4){display:none}.top{align-items:flex-start}.date{font-size:11px}}
-
-/* ===== MOBILE-FIRST OPTIMIZATION ===== */
-@media (max-width: 700px) {
-  html, body {
-    width: 100%;
-    overflow-x: hidden;
-    -webkit-text-size-adjust: 100%;
-  }
-
-  body {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .app {
-    display: block;
-    min-height: 100vh;
-  }
-
-  /* Bottom navigation instead of a 235px/70px sidebar */
-  .sidebar {
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    top: auto;
-    width: 100%;
-    height: calc(68px + env(safe-area-inset-bottom));
-    padding: 0 8px env(safe-area-inset-bottom);
-    background: rgba(17,17,17,.96);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
-    border-top: 1px solid #2d2d2d;
-  }
-
-  .brand,
-  .userbox {
-    display: none;
-  }
-
-  .nav {
-    height: 68px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    align-items: center;
-    gap: 3px;
-  }
-
-  .nav button {
-    height: 54px;
-    margin: 0;
-    padding: 5px 2px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    border-radius: 12px;
-    color: #999;
-    font-size: 10px;
-    line-height: 1.15;
-    font-weight: 650;
-  }
-
-  .nav button.active {
-    background: #292929;
-    color: #fff;
-  }
-
-  .nav button:nth-child(1)::before { content: "⌂"; font-size: 21px; line-height: 22px; }
-  .nav button:nth-child(2)::before { content: "◔"; font-size: 20px; line-height: 22px; }
-  .nav button:nth-child(3)::before { content: "▤"; font-size: 20px; line-height: 22px; }
-  .nav button:nth-child(4)::before { content: "⚙"; font-size: 19px; line-height: 22px; }
-
-  .main {
-    margin: 0;
-    width: 100%;
-    max-width: none;
-    padding: 20px 14px calc(92px + env(safe-area-inset-bottom));
-  }
-
-  .top {
-    margin-bottom: 18px;
-    align-items: flex-start;
-  }
-
-  h1 {
-    font-size: 28px;
-    line-height: 1.05;
-    letter-spacing: -1px;
-  }
-
-  .top .subtitle {
-    font-size: 13px;
-    margin-top: 5px;
-  }
-
-  .date {
-    font-size: 11px;
-    text-align: right;
-    line-height: 1.3;
-    max-width: 105px;
-  }
-
-  .sync {
-    font-size: 10px;
-    margin-top: 6px;
-  }
-
-  .kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 9px;
-    margin-bottom: 12px;
-  }
-
-  .kpi {
-    padding: 14px;
-    border-radius: 16px;
-  }
-
-  .kpi .l {
-    font-size: 10px;
-  }
-
-  .kpi .n {
-    font-size: 25px;
-    margin-top: 5px;
-  }
-
-  .kpi .delta {
-    font-size: 10px;
-  }
-
-  .grid {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .timer-card {
-    order: 1;
-    padding: 24px 16px 20px;
-    border-radius: 20px;
-  }
-
-  .grid > .card:not(.timer-card) {
-    order: 2;
-  }
-
-  .timer-label {
-    font-size: 11px;
-    letter-spacing: 1.2px;
-  }
-
-  .timer {
-    font-size: clamp(58px, 19vw, 82px);
-    letter-spacing: -4px;
-    margin: 17px 0 19px;
-  }
-
-  .timer-controls {
-    display: grid;
-    grid-template-columns: 1fr 1.25fr 1.25fr;
-    gap: 8px;
-  }
-
-  .timer-controls .btn {
-    min-height: 52px;
-    padding: 10px 7px;
-    font-size: 14px;
-  }
-
-  .session-row {
-    grid-template-columns: 1fr;
-    gap: 11px;
-    margin-top: 18px;
-  }
-
-  .session-row label,
-  .notes-label {
-    font-size: 11px;
-    margin-bottom: 5px;
-  }
-
-  input {
-    min-height: 48px;
-    padding: 12px 13px;
-    font-size: 16px; /* prevents iOS Safari auto-zoom */
-    border-radius: 12px;
-  }
-
-  .cardpad,
-  .history,
-  .analytics-card {
-    padding: 17px;
-    border-radius: 18px;
-  }
-
-  .section-title {
-    font-size: 16px;
-    margin-bottom: 12px;
-  }
-
-  .chart {
-    height: 175px;
-    gap: 5px;
-  }
-
-  .bar {
-    width: min(27px, 75%);
-  }
-
-  .bar-label {
-    font-size: 9px;
-  }
-
-  .bar-value {
-    font-size: 8px;
-  }
-
-  /* Mobile-friendly history rows */
-  .table {
-    font-size: 12px;
-  }
-
-  .table thead {
-    display: none;
-  }
-
-  .table tbody,
-  .table tr,
-  .table td {
-    display: block;
-    width: 100%;
-  }
-
-  .table tr {
-    padding: 12px 0;
-    border-bottom: 1px solid #eee;
-  }
-
-  .table td {
-    padding: 3px 0;
-    border: 0;
-  }
-
-  .table td:nth-child(1) {
-    color: #888;
-    font-size: 10px;
-  }
-
-  .table td:nth-child(2) {
-    font-size: 13px;
-    font-weight: 700;
-  }
-
-  .table td:nth-child(3) {
-    font-weight: 700;
-  }
-
-  .table td:nth-child(4) {
-    color: #888;
-    font-size: 11px;
-  }
-
-  .empty {
-    padding: 30px 12px;
-    font-size: 13px;
-  }
-
-  .analytics-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .big-number {
-    font-size: 36px;
-  }
-
-  .subject {
-    grid-template-columns: 105px 1fr 45px;
-    gap: 7px;
-    font-size: 11px;
-  }
-
-  .progress {
-    height: 7px;
-  }
-
-  .settings-row {
-    gap: 15px;
-    align-items: flex-start;
-  }
-
-  .settings-row > input {
-    width: 85px !important;
-    flex-shrink: 0;
-  }
-
-  /* Give the Save Session action more visual priority */
-  #saveSessionBtn {
-    min-height: 52px;
-  }
-}
-
-/* Very small phones */
-@media (max-width: 380px) {
-  .main {
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-
-  h1 {
-    font-size: 25px;
-  }
-
-  .timer {
-    font-size: 55px;
-  }
-
-  .timer-controls {
-    grid-template-columns: 1fr 1.15fr 1.25fr;
-  }
-
-  .timer-controls .btn {
-    font-size: 13px;
-  }
-
-  .kpi .n {
-    font-size: 22px;
-  }
-}
-
-
-/* =========================================================
-   STUDYFLOW — CLEAN MOBILE UI
-   ========================================================= */
 :root{
-  --bg:#f7f7f8;
-  --surface:#ffffff;
-  --surface-2:#f2f2f4;
-  --ink:#111111;
-  --muted:#7b7b80;
-  --line:#e7e7ea;
-  --accent:#111111;
-  --success:#159b63;
-  --radius:22px;
+  --bg:#f7f7f8;--card:#fff;--text:#111;--muted:#77777d;--line:#e7e7ea;
+  --soft:#f1f1f3;--green:#159b63;--red:#c93434;--radius:20px
 }
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;min-height:100%;font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+body{overflow-x:hidden}
+button,input,select{font:inherit}
+button{border:0;cursor:pointer}
+button:disabled{cursor:not-allowed}
+.hidden{display:none!important}
+.app{min-height:100vh}
+.sidebar{position:fixed;z-index:50;left:0;top:0;bottom:0;width:230px;background:#111;color:#fff;padding:25px 15px}
+.brand{font-size:21px;font-weight:800;padding:0 12px 28px;letter-spacing:-.5px}.brand span{color:#888}
+.nav button{display:block;width:100%;text-align:left;background:transparent;color:#999;padding:12px 13px;border-radius:11px;margin:4px 0;font-weight:650}
+.nav button:hover,.nav button.active{background:#282828;color:#fff}
+.userbox{position:absolute;left:20px;right:20px;bottom:22px;border-top:1px solid #2c2c2c;padding-top:14px}
+.useremail{font-size:11px;color:#aaa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.logout{margin-top:9px;background:#252525;color:#ddd;border-radius:9px;padding:8px 11px;font-size:11px}
+.main{margin-left:230px;padding:30px 38px 55px;max-width:1500px}
+.top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
+h1{font-size:31px;line-height:1;margin:0;letter-spacing:-1.3px}.subtitle{color:var(--muted);font-size:14px;margin-top:6px}
+.date{color:#707076;font-size:12px;text-align:right;max-width:180px}.sync{font-size:11px;color:#777;margin-top:7px}
+.view{display:none}.view.active{display:block}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.kpi,.card{background:var(--card);border:1px solid var(--line);box-shadow:0 3px 15px rgba(0,0,0,.025)}
+.kpi{padding:17px;border-radius:17px}.kpi .l{font-size:11px;color:#777;font-weight:650}.kpi .n{font-size:27px;font-weight:800;margin-top:7px;letter-spacing:-.7px}.kpi .delta{font-size:10px;color:var(--green);margin-top:6px}
+.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:16px}
+.timer-card{padding:29px 20px;text-align:center;border-radius:23px}
+.timer-label{font-size:10px;color:#89898e;font-weight:750;letter-spacing:1.7px}
+.timer{font-variant-numeric:tabular-nums;font-size:86px;line-height:.95;letter-spacing:-5px;font-weight:750;margin:20px 0 22px}
+.timer-controls{display:grid;grid-template-columns:1fr 1.05fr 1.15fr;gap:8px}
+.btn{min-height:49px;padding:10px 14px;border-radius:12px;font-weight:750}.primary{background:#111;color:#fff;box-shadow:0 3px 8px rgba(0,0,0,.12)}.secondary{background:var(--soft);color:#222}.danger{background:#fff0f0;color:var(--red)}
+.session-row{display:grid;grid-template-columns:1fr 1fr;gap:11px;text-align:left;margin-top:19px}
+.field{margin-top:12px;text-align:left}.field label,.session-row label{display:block;color:#777;font-size:11px;font-weight:700;margin-bottom:5px}
+input,select{width:100%;min-height:47px;border:1px solid #e4e4e7;background:#f8f8f9;border-radius:12px;padding:11px 12px;outline:none;color:#111}
+input:focus,select:focus{background:#fff;border-color:#bdbdc2;box-shadow:0 0 0 3px rgba(0,0,0,.04)}
+.cardpad,.history,.analytics-card{padding:19px;border-radius:20px}.section-title{font-size:16px;font-weight:750;margin:0 0 13px}
+.chart{height:190px;display:flex;align-items:end;gap:7px;padding-top:15px}.bar-wrap{height:100%;flex:1;display:flex;align-items:end;justify-content:center;position:relative}.bar{width:min(30px,75%);min-height:3px;background:#111;border-radius:7px 7px 3px 3px}.bar-label{position:absolute;bottom:-22px;color:#888;font-size:9px}.bar-value{position:absolute;top:-16px;color:#666;font-size:8px}
+.history{margin-top:16px}.empty{text-align:center;padding:35px 12px;color:#888;font-size:13px}
+.table{width:100%;border-collapse:collapse;font-size:12px}.table th{text-align:left;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.5px;padding:9px 7px;border-bottom:1px solid var(--line)}.table td{padding:12px 7px;border-bottom:1px solid #f0f0f0;vertical-align:middle}.pill{display:inline-block;background:#f0f0f2;border-radius:99px;padding:5px 8px;font-size:10px;font-weight:750}
+.delete-btn{background:#fff0f0;color:#c33;border-radius:8px;padding:7px 9px;font-size:10px;font-weight:700}.delete-all{background:none;color:#c33;font-size:11px;padding:5px}
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.big-number{font-size:42px;font-weight:800;letter-spacing:-1.5px;margin:4px 0}.subjects{display:flex;flex-direction:column;gap:12px}.subject{display:grid;grid-template-columns:125px 1fr 50px;align-items:center;gap:8px;font-size:11px}.progress{height:7px;background:#eee;border-radius:99px;overflow:hidden}.progress i{display:block;height:100%;background:#111;border-radius:99px}.heatmap{display:flex;gap:5px;flex-wrap:wrap;margin-top:16px}.day{width:14px;height:14px;border-radius:3px;background:#e8e8e8}.day.l1{background:#ccc}.day.l2{background:#999}.day.l3{background:#555}.day.l4{background:#111}
+.settings-row{display:flex;justify-content:space-between;align-items:center;gap:15px;padding:15px 0;border-bottom:1px solid var(--line)}
+.modal-backdrop{position:fixed;z-index:100;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;padding:18px}
+.modal{width:min(460px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:22px;padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}.modal-title{font-size:20px;font-weight:800;letter-spacing:-.5px}.close{background:#f0f0f2;border-radius:50%;width:34px;height:34px;font-size:20px;color:#555}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.form-actions{display:flex;gap:8px;margin-top:18px}.form-actions .btn{flex:1}
+.auth-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.auth-card{width:min(420px,100%);background:#fff;border:1px solid var(--line);border-radius:24px;padding:32px;box-shadow:0 18px 55px rgba(0,0,0,.08);text-align:center}
+.auth-brand{font-size:28px;font-weight:850;letter-spacing:-1px}.auth-brand span{color:#888}
+.auth-card h1{font-size:26px;margin:28px 0 8px}.auth-card .subtitle{line-height:1.5;margin-bottom:23px}
+.google-btn{width:100%;min-height:52px;background:#fff;color:#222;border:1px solid #d8d8dc;border-radius:13px;display:flex;align-items:center;justify-content:center;gap:10px;font-weight:750;box-shadow:0 2px 7px rgba(0,0,0,.04)}
+.google-btn:hover{background:#fafafa}.google-icon{width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center}.google-icon svg{width:20px;height:20px}
+.auth-error{display:none;margin-top:14px;padding:11px 13px;border-radius:12px;background:#fff0f0;color:#b52828;font-size:12px;line-height:1.45;text-align:left}.auth-note{font-size:11px;color:#999;margin-top:17px;line-height:1.45}
+.config-warning{margin-top:15px;padding:11px;border-radius:11px;background:#fff8e6;border:1px solid #edd78c;color:#7a5a00;font-size:11px;text-align:left}
 
-@media (max-width:700px){
-  body{
-    background:var(--bg);
-    color:var(--ink);
-  }
-
-  .main{
-    padding:18px 16px calc(94px + env(safe-area-inset-bottom));
-  }
-
-  /* Compact header */
-  .top{
-    margin:4px 2px 22px;
-    display:grid;
-    grid-template-columns:1fr auto;
-    column-gap:12px;
-    align-items:start;
-  }
-
-  h1{
-    font-size:30px;
-    line-height:1.02;
-    font-weight:800;
-    letter-spacing:-1.35px;
-    margin:0;
-  }
-
-  .top .subtitle{
-    margin-top:7px;
-    color:#77777c;
-    font-size:14px;
-  }
-
-  .sync{
-    margin-top:8px;
-    color:#77777c;
-    font-size:11px;
-  }
-
-  .date{
-    color:#6f6f74;
-    font-size:11px;
-    line-height:1.3;
-    text-align:right;
-    max-width:92px;
-  }
-
-  /* KPI cards — lighter and less bulky */
-  .kpis{
-    gap:10px;
-    margin-bottom:14px;
-  }
-
-  .kpi{
-    padding:16px;
-    min-height:106px;
-    border:1px solid var(--line);
-    border-radius:18px;
-    box-shadow:0 2px 8px rgba(0,0,0,.025);
-  }
-
-  .kpi .l{
-    color:#77777c;
-    font-size:11px;
-    font-weight:650;
-  }
-
-  .kpi .n{
-    margin-top:7px;
-    font-size:27px;
-    line-height:1;
-    letter-spacing:-.8px;
-    font-weight:800;
-  }
-
-  .kpi .delta{
-    margin-top:7px;
-    color:var(--success);
-    font-size:10px;
-    font-weight:650;
-  }
-
-  /* Main timer card */
-  .grid{
-    gap:14px;
-  }
-
-  .timer-card{
-    padding:27px 16px 18px;
-    border-radius:24px;
-    border:1px solid var(--line);
-    box-shadow:0 4px 18px rgba(0,0,0,.035);
-  }
-
-  .timer-label{
-    color:#8a8a8f;
-    font-size:10px;
-    font-weight:750;
-    letter-spacing:1.7px;
-  }
-
-  .timer{
-    margin:18px 0 22px;
-    font-size:clamp(60px,18vw,78px);
-    font-weight:750;
-    letter-spacing:-4px;
-    line-height:.95;
-  }
-
-  /* Three controls with consistent visual hierarchy */
-  .timer-controls{
-    display:grid;
-    grid-template-columns:1fr 1.05fr 1.18fr;
-    gap:8px;
-  }
-
-  .timer-controls .btn{
-    min-height:50px;
-    padding:10px 6px;
-    border-radius:13px;
-    font-size:13px;
-    font-weight:750;
-  }
-
-  .timer-controls .primary{
-    box-shadow:0 3px 8px rgba(0,0,0,.12);
-  }
-
-  #saveSessionBtn:disabled{
-    opacity:.42;
-    cursor:not-allowed;
-  }
-
-  /* Inputs */
-  .session-row{
-    margin-top:20px;
-    gap:12px;
-  }
-
-  .session-row label,
-  .notes-label{
-    color:#77777c;
-    font-size:11px;
-    font-weight:700;
-  }
-
-  input{
-    min-height:48px;
-    background:#f8f8f9;
-    border:1px solid #e5e5e8;
-    border-radius:13px;
-    padding:12px 13px;
-    font-size:16px;
-    color:#111;
-  }
-
-  input::placeholder{
-    color:#aaaab0;
-  }
-
-  input:focus{
-    background:#fff;
-    border-color:#bcbcc1;
-    box-shadow:0 0 0 3px rgba(0,0,0,.045);
-  }
-
-  /* Secondary cards */
-  .cardpad,
-  .history,
-  .analytics-card{
-    border-radius:20px;
-    border:1px solid var(--line);
-    box-shadow:0 2px 12px rgba(0,0,0,.025);
-  }
-
-  .cardpad{
-    padding:18px;
-  }
-
-  .section-title{
-    font-size:16px;
-    font-weight:750;
-  }
-
-  /* Bottom navigation — minimal iOS-style */
-  .sidebar{
-    height:calc(72px + env(safe-area-inset-bottom));
-    padding:0 10px env(safe-area-inset-bottom);
-    background:rgba(18,18,18,.94);
-    backdrop-filter:blur(20px);
-    -webkit-backdrop-filter:blur(20px);
-    box-shadow:0 -5px 20px rgba(0,0,0,.12);
-  }
-
-  .nav{
-    height:72px;
-    gap:2px;
-  }
-
-  .nav button{
-    position:relative;
-    height:58px;
-    margin:7px 0 0;
-    padding:4px 2px;
-    border-radius:15px;
-    color:#8e8e93;
-    font-size:9px;
-    font-weight:650;
-    gap:2px;
-  }
-
-  .nav button.active{
-    background:#292929;
-    color:#fff;
-  }
-
-  .nav button::before{
-    opacity:.9;
-  }
-
-  /* Chart */
-  .chart{
-    height:160px;
-    gap:5px;
-    padding-top:20px;
-  }
-
-  .bar{
-    width:24px;
-    border-radius:7px 7px 3px 3px;
-  }
-
-  .bar-value{
-    font-size:8px;
-  }
-
-  .bar-label{
-    font-size:8px;
-    bottom:-21px;
-  }
-
-  /* History: turn each row into a clean compact card */
-  .table thead{display:none}
-  .table,
-  .table tbody,
-  .table tr,
-  .table td{
-    display:block;
-    width:100%;
-  }
-
-  .table tr{
-    position:relative;
-    padding:12px 0;
-    border-bottom:1px solid #eeeeef;
-  }
-
-  .table tr:last-child{
-    border-bottom:0;
-  }
-
-  .table td{
-    padding:2px 0;
-    border:0;
-  }
-
-  .table td:nth-child(1){
-    color:#99999e;
-    font-size:10px;
-  }
-
-  .table td:nth-child(2){
-    margin-top:2px;
-    font-size:13px;
-    font-weight:750;
-  }
-
-  .table td:nth-child(3){
-    color:#55555a;
-    font-size:11px;
-    font-weight:700;
-  }
-
-  .table td:nth-child(4){
-    color:#99999e;
-    font-size:10px;
-  }
-
-  /* Analytics */
-  .analytics-grid{
-    gap:12px;
-  }
-
-  .big-number{
-    font-size:38px;
-    letter-spacing:-1.5px;
-  }
-
-  .subject{
-    grid-template-columns:100px 1fr 42px;
-    gap:7px;
-    font-size:11px;
-  }
-
-  /* Settings */
-  .settings-row{
-    padding:14px 0;
-  }
-
-  /* Avoid iOS input zoom */
-  input,button,select{
-    font-size:16px;
-  }
+@media(max-width:900px){
+ .sidebar{width:70px}.brand{font-size:0}.brand:after{content:"S";font-size:22px}.nav button{font-size:0;text-align:center}.nav button:nth-child(1):before{content:"⌂";font-size:20px}.nav button:nth-child(2):before{content:"◔";font-size:20px}.nav button:nth-child(3):before{content:"▤";font-size:20px}.nav button:nth-child(4):before{content:"⚙";font-size:19px}.userbox{display:none}.main{margin-left:70px;padding:25px}.grid,.analytics-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}
 }
-
-/* Smallest screens */
-@media(max-width:380px){
-  .main{padding-left:12px;padding-right:12px}
-  h1{font-size:27px}
-  .timer{font-size:58px}
-  .timer-controls{grid-template-columns:1fr 1.05fr 1.15fr}
-  .timer-controls .btn{font-size:12px}
-  .kpi{padding:14px;min-height:100px}
-  .kpi .n{font-size:24px}
-}
-
-
-/* Save Session state */
-#saveBtn:disabled{opacity:.45;cursor:not-allowed}
-#saveBtn:not(:disabled){box-shadow:0 2px 8px rgba(0,0,0,.08)}
-
-.subject-select{
-  width:100%;
-  min-height:48px;
-  padding:12px 40px 12px 13px;
-  border:1px solid #e5e5e8;
-  border-radius:13px;
-  background:#f8f8f9;
-  color:#111;
-  font:inherit;
-  font-size:16px;
-  appearance:none;
-  -webkit-appearance:none;
-  background-image:linear-gradient(45deg,transparent 50%,#777 50%),linear-gradient(135deg,#777 50%,transparent 50%);
-  background-position:calc(100% - 18px) 21px,calc(100% - 12px) 21px;
-  background-size:6px 6px,6px 6px;
-  background-repeat:no-repeat;
-}
-.subject-select:focus{
-  outline:none;
-  background-color:#fff;
-  border-color:#bcbcc1;
-  box-shadow:0 0 0 3px rgba(0,0,0,.045);
-}
-
-</style>
-<style>
-/* Google-only authentication */
-.google-only-auth{text-align:left;max-width:440px}
-.auth-mark{width:48px;height:48px;border-radius:15px;background:#111;color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;margin:30px 0 18px}
-.google-only-auth h1{margin:0 0 8px;font-size:27px;letter-spacing:-.7px}
-.google-login{width:100%;min-height:54px;margin-top:25px;border:1px solid #d9d9dd;border-radius:13px;background:#fff;color:#171717;display:flex;align-items:center;justify-content:center;gap:11px;font-size:15px;font-weight:700;box-shadow:0 2px 8px rgba(0,0,0,.04);transition:.15s}
-.google-login:hover{background:#fafafa;border-color:#c9c9ce;box-shadow:0 4px 12px rgba(0,0,0,.07)}
-.google-login:active{transform:translateY(1px)}
-.google-icon{display:flex;align-items:center}
-.google-note{text-align:center;color:#8a8a90;font-size:11px;line-height:1.55;margin-top:15px}
 @media(max-width:700px){
- .auth-screen{padding:18px}
- .auth-card.google-only-auth{padding:27px 22px;border-radius:22px}
- .google-only-auth h1{font-size:24px}
- .auth-mark{margin-top:22px}
+ html,body{-webkit-text-size-adjust:100%}.app{display:block}
+ .sidebar{left:0;right:0;top:auto;bottom:0;width:100%;height:calc(72px + env(safe-area-inset-bottom));padding:0 10px env(safe-area-inset-bottom);background:rgba(17,17,17,.95);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 -6px 20px rgba(0,0,0,.12)}
+ .brand,.userbox{display:none}.nav{height:72px;display:grid;grid-template-columns:repeat(4,1fr);gap:2px}.nav button{height:58px;margin:7px 0 0;padding:4px 2px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:9px;line-height:1.15;border-radius:15px;color:#8e8e93}.nav button.active{background:#292929;color:#fff}
+ .main{margin:0;width:100%;padding:18px 14px calc(94px + env(safe-area-inset-bottom));max-width:none}
+ .top{margin:4px 2px 20px;display:grid;grid-template-columns:1fr auto;column-gap:12px}.top h1{font-size:29px}.top .subtitle{font-size:13px}.date{font-size:10px;max-width:95px}.sync{font-size:10px}
+ .kpis{gap:9px;margin-bottom:12px}.kpi{padding:14px;min-height:100px;border-radius:17px}.kpi .l{font-size:10px}.kpi .n{font-size:24px}.kpi .delta{font-size:9px}
+ .grid{display:flex;flex-direction:column;gap:12px}.timer-card{order:1;padding:25px 15px 18px;border-radius:23px}.grid>.card:not(.timer-card){order:2}
+ .timer{font-size:clamp(58px,18vw,78px);margin:18px 0 20px}.timer-controls{grid-template-columns:1fr 1.05fr 1.15fr;gap:7px}.timer-controls .btn{min-height:50px;padding:9px 5px;font-size:12px}
+ .session-row{grid-template-columns:1fr;gap:10px;margin-top:17px}.field{margin-top:10px}input,select{font-size:16px;min-height:48px}
+ .cardpad,.history,.analytics-card{padding:17px;border-radius:19px}.chart{height:160px;gap:4px}.bar{width:23px}.bar-label{font-size:8px}.bar-value{font-size:7px}
+ .table thead{display:none}.table,.table tbody,.table tr,.table td{display:block;width:100%}.table tr{padding:12px 0;border-bottom:1px solid #eee}.table td{padding:2px 0;border:0}.table td:nth-child(1){color:#999;font-size:10px}.table td:nth-child(2){font-size:13px;font-weight:750}.table td:nth-child(3){font-size:11px;font-weight:700;color:#555}.table td:nth-child(4){font-size:10px;color:#999}.table td:nth-child(5){position:absolute;right:0;margin-top:-34px}
+ .subject{grid-template-columns:100px 1fr 45px;font-size:10px}.big-number{font-size:36px}.form-grid{grid-template-columns:1fr}.modal{padding:19px;border-radius:20px}
 }
+@media(max-width:380px){.main{padding-left:11px;padding-right:11px}.top h1{font-size:27px}.timer{font-size:56px}.timer-controls .btn{font-size:11px}.kpi .n{font-size:22px}}
 </style>
 </head>
 <body>
 
 <div id="authScreen" class="auth-screen">
-  <div class="auth-card google-only-auth">
+  <div class="auth-card">
     <div class="auth-brand">Study<span>Flow</span></div>
-    <div class="auth-mark">◉</div>
     <h1>Welcome to StudyFlow</h1>
     <div class="subtitle">Track your study time, build consistency, and sync your history across devices.</div>
-    <button class="google-login" id="googleBtn" type="button">
-      <span class="google-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M21.35 12.23c0-.7-.06-1.38-.18-2.03H12v3.84h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.2z"/><path fill="#34A853" d="M12 21.75c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.7-1.72-5.47-4.03H3.28v2.53A9.75 9.75 0 0 0 12 21.75z"/><path fill="#FBBC05" d="M6.53 13.84A5.86 5.86 0 0 1 6.22 12c0-.64.11-1.26.31-1.84V7.63H3.28A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.06 1.03 4.37l3.25-2.53z"/><path fill="#EA4335" d="M12 6.13c1.43 0 2.72.49 3.73 1.45l2.8-2.8C16.84 3.16 14.63 2.25 12 2.25a9.75 9.75 0 0 0-8.72 5.38l3.25 2.53C7.3 7.85 9.46 6.13 12 6.13z"/></svg>
+    <button id="googleBtn" class="google-btn" type="button">
+      <span class="google-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#4285F4" d="M21.35 12.23c0-.7-.06-1.38-.18-2.03H12v3.84h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.2z"/>
+          <path fill="#34A853" d="M12 21.75c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.7-1.72-5.47-4.03H3.28v2.53A9.75 9.75 0 0 0 12 21.75z"/>
+          <path fill="#FBBC05" d="M6.53 13.84A5.86 5.86 0 0 1 6.22 12c0-.64.11-1.26.31-1.84V7.63H3.28A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.06 1.03 4.37l3.25-2.53z"/>
+          <path fill="#EA4335" d="M12 6.13c1.43 0 2.72.49 3.73 1.45l2.8-2.8C16.84 3.16 14.63 2.25 12 2.25a9.75 9.75 0 0 0-5.47 1.68l3.25 2.53C10.55 5.54 11.22 5.13 12 5.13z"/>
+        </svg>
       </span>
-      <span>Continue with Google</span>
+      Continue with Google
     </button>
-    <div class="google-note">Use your Google account to securely sign in.<br>Your study history stays tied to your account.</div>
-    <div id="authError" class="msg error"></div>
-    <div id="authSuccess" class="msg success"></div>
-    <div id="configWarning" class="warning hidden">Supabase is not configured. Check the project URL and anon key in the JavaScript section.</div>
+    <div id="authError" class="auth-error"></div>
+    <div id="configWarning" class="config-warning hidden">Supabase configuration is missing.</div>
+    <div class="auth-note">Sign in securely with your Google account. Your study records are private to your account.</div>
   </div>
 </div>
 
 <div id="app" class="app hidden">
-<aside class="sidebar">
-  <div class="brand">Study<span>Flow</span></div>
-  <div class="nav">
-    <button class="active" onclick="showView('dashboard',this)">Dashboard</button>
-    <button onclick="showView('analytics',this)">Analytics</button>
-    <button onclick="showView('history',this)">History</button>
-    <button onclick="showView('settings',this)">Settings</button>
-  </div>
-  <div class="userbox"><div class="useremail" id="userEmail"></div><button class="logout" onclick="logout()">Log out</button></div>
-</aside>
-
-<main class="main">
-<div class="top"><div><h1 id="pageTitle">Study Dashboard</h1><div class="subtitle">Focus, track, improve.</div><div class="sync" id="syncStatus">☁ Cloud synced</div></div><div class="date" id="today"></div></div>
-
-<section id="dashboard" class="view active">
-  <div class="kpis">
-    <div class="kpi"><div class="l">Today</div><div class="n" id="kToday">0m</div><div class="delta">study time</div></div>
-    <div class="kpi"><div class="l">This week</div><div class="n" id="kWeek">0h</div><div class="delta">last 7 days</div></div>
-    <div class="kpi"><div class="l">Sessions</div><div class="n" id="kSessions">0</div><div class="delta">completed</div></div>
-    <div class="kpi"><div class="l">Streak</div><div class="n" id="kStreak">0</div><div class="delta">days</div></div>
-  </div>
-  <div class="grid">
-    <div class="card timer-card">
-      <div class="timer-label">FOCUS SESSION</div>
-      <div class="timer" id="timer">25:00</div>
-      <div class="timer-controls"><button class="btn secondary" onclick="resetTimer()">Reset</button><button class="btn primary" id="startBtn" onclick="toggleTimer()">Start</button><button class="btn secondary" id="saveBtn" onclick="savePartialSession()" disabled>Save Session</button></div>
-      <div class="session-row">
-        <div>
-          <label>Subject</label>
-          <select id="subject" class="subject-select" aria-label="Study subject"></select>
-        </div>
-        <div><label>Duration (minutes)</label><input id="duration" type="number" min="1" step="1" value="25"></div>
-      </div>
-      <div style="margin-top:12px;text-align:left"><label class="notes-label">Notes (optional)</label><input id="notes" placeholder="What are you studying?"></div>
+  <aside class="sidebar">
+    <div class="brand">Study<span>Flow</span></div>
+    <div class="nav">
+      <button class="active" onclick="showView('dashboard',this)">Dashboard</button>
+      <button onclick="showView('analytics',this)">Analytics</button>
+      <button onclick="showView('history',this)">History</button>
+      <button onclick="showView('settings',this)">Settings</button>
     </div>
-    <div class="card cardpad"><h2 class="section-title">Last 7 days</h2><div class="chart" id="weekChart"></div><div style="margin-top:29px;color:#777;font-size:12px">■ Study minutes</div></div>
+    <div class="userbox">
+      <div class="useremail" id="userEmail"></div>
+      <button class="logout" onclick="logout()">Log out</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="top">
+      <div>
+        <h1 id="pageTitle">Study Dashboard</h1>
+        <div class="subtitle">Focus, track, improve.</div>
+        <div class="sync" id="syncStatus">☁ Connecting…</div>
+      </div>
+      <div class="date" id="today"></div>
+    </div>
+
+    <section id="dashboard" class="view active">
+      <div class="kpis">
+        <div class="kpi"><div class="l">Today</div><div class="n" id="kToday">0m</div><div class="delta">study time</div></div>
+        <div class="kpi"><div class="l">This week</div><div class="n" id="kWeek">0h</div><div class="delta">last 7 days</div></div>
+        <div class="kpi"><div class="l">Sessions</div><div class="n" id="kSessions">0</div><div class="delta">completed</div></div>
+        <div class="kpi"><div class="l">Streak</div><div class="n" id="kStreak">0</div><div class="delta">days</div></div>
+      </div>
+
+      <div class="grid">
+        <div class="card timer-card">
+          <div class="timer-label">FOCUS SESSION</div>
+          <div class="timer" id="timer">25:00</div>
+
+          <div class="timer-controls">
+            <button class="btn secondary" onclick="resetTimer()">Reset</button>
+            <button class="btn primary" id="startBtn" onclick="toggleTimer()">Start</button>
+            <button class="btn secondary" id="saveSessionBtn" onclick="savePartialSession()" disabled>Save</button>
+          </div>
+
+          <div class="session-row">
+            <div>
+              <label>Subject</label>
+              <select id="subject"></select>
+            </div>
+            <div>
+              <label>Planned duration</label>
+              <input id="duration" type="number" min="1" step="1" value="25">
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Notes</label>
+            <input id="notes" placeholder="What are you studying?">
+          </div>
+        </div>
+
+        <div class="card cardpad">
+          <h2 class="section-title">Last 7 days</h2>
+          <div class="chart" id="weekChart"></div>
+          <div style="margin-top:27px;color:#777;font-size:11px">■ Study minutes</div>
+        </div>
+      </div>
+
+      <div class="card history">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+          <h2 class="section-title" style="margin:0">Recent sessions</h2>
+          <button class="btn secondary" style="min-height:38px;padding:7px 11px;font-size:11px" onclick="openManualModal()">＋ Log session</button>
+        </div>
+        <div id="recent"></div>
+      </div>
+    </section>
+
+    <section id="analytics" class="view">
+      <div class="analytics-grid">
+        <div class="card analytics-card"><div class="section-title">Total study time</div><div class="big-number" id="aTotal">0m</div><div class="subtitle">All recorded sessions</div></div>
+        <div class="card analytics-card"><div class="section-title">Average session</div><div class="big-number" id="aAvg">0m</div><div class="subtitle">Across completed sessions</div></div>
+        <div class="card analytics-card"><h2 class="section-title">Subject breakdown</h2><div class="subjects" id="subjects"></div></div>
+        <div class="card analytics-card"><h2 class="section-title">Study consistency</h2><div class="subtitle">Last 28 days</div><div class="heatmap" id="heatmap"></div></div>
+      </div>
+      <div class="card analytics-card" style="margin-top:16px"><h2 class="section-title">14-day trend</h2><div class="chart" id="analyticsChart"></div></div>
+    </section>
+
+    <section id="history" class="view">
+      <div class="card history" style="margin-top:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <h2 class="section-title" style="margin:0">Study history</h2>
+          <div style="display:flex;gap:7px">
+            <button class="btn secondary" style="min-height:36px;padding:7px 10px;font-size:10px" onclick="openManualModal()">＋ Log</button>
+            <button class="delete-all" onclick="deleteAllSessions()">Delete all</button>
+          </div>
+        </div>
+        <div id="fullHistory"></div>
+      </div>
+    </section>
+
+    <section id="settings" class="view">
+      <div class="card analytics-card">
+        <h2 class="section-title">Account & settings</h2>
+        <div class="settings-row">
+          <div><b>Signed-in account</b><div class="subtitle" id="settingsEmail"></div></div>
+        </div>
+        <div class="settings-row">
+          <div><b>Default timer</b><div class="subtitle">Minutes used when you reset</div></div>
+          <input id="defaultDuration" type="number" min="1" step="1" value="25" style="width:90px">
+        </div>
+        <div class="settings-row">
+          <div><b>Export history</b><div class="subtitle">Download your sessions as JSON</div></div>
+          <button class="btn secondary" style="min-height:40px" onclick="exportData()">Export</button>
+        </div>
+        <div class="settings-row">
+          <div><b>Sign out</b><div class="subtitle">Your cloud data remains saved</div></div>
+          <button class="btn secondary" style="min-height:40px" onclick="logout()">Log out</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="manualModal" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title">Log a study session</div>
+        <div class="subtitle">Add time from Apple Clock or any other timer.</div>
+      </div>
+      <button class="close" onclick="closeManualModal()">×</button>
+    </div>
+
+    <div class="field">
+      <label>Subject</label>
+      <select id="manualSubject"></select>
+    </div>
+
+    <div class="form-grid">
+      <div class="field">
+        <label>Date</label>
+        <input id="manualDate" type="date">
+      </div>
+      <div class="field">
+        <label>Start time (optional)</label>
+        <input id="manualStart" type="time">
+      </div>
+      <div class="field">
+        <label>Hours</label>
+        <input id="manualHours" type="number" min="0" step="1" value="0">
+      </div>
+      <div class="field">
+        <label>Minutes</label>
+        <input id="manualMinutes" type="number" min="0" max="59" step="1" value="30">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Notes (optional)</label>
+      <input id="manualNotes" placeholder="e.g. CFA Fixed Income — Chapter 3">
+    </div>
+
+    <div class="form-actions">
+      <button class="btn secondary" onclick="closeManualModal()">Cancel</button>
+      <button class="btn primary" onclick="saveManualSession()">Save to StudyFlow</button>
+    </div>
   </div>
-  <div class="card history"><h2 class="section-title">Recent sessions</h2><div id="recent"></div></div>
-</section>
-
-<section id="analytics" class="view">
-  <div class="analytics-grid">
-    <div class="card analytics-card"><div class="section-title">Total study time</div><div class="big-number" id="aTotal">0h</div><div class="subtitle">All recorded sessions</div></div>
-    <div class="card analytics-card"><div class="section-title">Average session</div><div class="big-number" id="aAvg">0m</div><div class="subtitle">Across completed sessions</div></div>
-    <div class="card analytics-card"><h2 class="section-title">Subject breakdown</h2><div class="subjects" id="subjects"></div></div>
-    <div class="card analytics-card"><h2 class="section-title">Study consistency</h2><div class="subtitle">Last 28 days</div><div class="streak" id="heatmap"></div></div>
-  </div>
-  <div class="card analytics-card" style="margin-top:20px"><h2 class="section-title">14-day trend</h2><div class="chart" id="analyticsChart"></div></div>
-</section>
-
-<section id="history" class="view"><div class="card history" style="margin-top:0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h2 class="section-title" style="margin:0">Cloud study history</h2><button class="danger-link" style="color:#c33;background:none;font-size:12px;padding:5px" onclick="deleteAllSessions()">Delete all</button></div><div id="fullHistory"></div></div></section>
-
-<section id="settings" class="view"><div class="card analytics-card"><h2 class="section-title">Account & settings</h2><div class="settings-row"><div><b>Signed-in account</b><div class="subtitle" id="settingsEmail"></div></div></div><div class="settings-row"><div><b>Default timer</b><div class="subtitle">Minutes used when you reset</div></div><input id="defaultDuration" type="number" min="1" step="1" value="25" style="width:100px"></div><div class="settings-row"><div><b>Export cloud history</b><div class="subtitle">Download your sessions as JSON</div></div><button class="btn secondary" onclick="exportData()">Export</button></div><div class="settings-row"><div><b>Sign out</b><div class="subtitle">Your cloud data remains saved</div></div><button class="btn secondary" onclick="logout()">Log out</button></div></div></section>
-</main></div>
+</div>
 
 <script>
-/* ============================================================
-   SUPABASE CONFIG
-   Replace ONLY these two values.
-   Get them from Supabase:
-   Project Settings -> API
-   Use the Project URL and Publishable/anon key.
-   NEVER use a service_role/secret key here.
-   ============================================================ */
+/* ==========================================================
+   STUDYFLOW CONFIG
+   The anon key is safe for browser use when RLS is enabled.
+   NEVER put a service_role / sb_secret key in this file.
+   ========================================================== */
 const SUPABASE_URL = "https://tfufehjjbggqqjhgfgde.supabase.co";
-// Normalize accidental REST endpoint pastes such as .../rest/v1/ back to the project URL.
-const SUPABASE_PROJECT_URL = SUPABASE_URL.replace(/\/rest\/v1\/?$/, "").replace(/\/$/, "");
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRmdWZlaGpqYmdncXFqaGdmZ2RlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY0NjMwMTUsImV4cCI6MjEwMjAzOTAxNX0.jTMOzomIdbb-AodEYfKeirn0MZ5nX91H5aQGL18EVcY";
+const SITE_URL = "https://thisisayushgupta.github.io/studyflow/";
 
-let db=null,currentUser=null,sessions=[],timerSeconds=1500,timerRunning=false,interval=null,sessionInitialSeconds=1500,sessionElapsedSeconds=0,sessionSaving=false,sessionStartedAt=null,sessionAccumulatedSeconds=0;
-const $=id=>document.getElementById(id);
-const pad=n=>String(n).padStart(2,"0");
-const fmtMin=m=>m<60?`${Math.round(m)}m`:`${Math.floor(m/60)}h ${Math.round(m%60)}m`;
-const dateKey=d=>new Date(d).toLocaleDateString("en-CA");
-const todayKey=()=>dateKey(new Date());
+let db = null;
+let currentUser = null;
+let sessions = [];
+let timerRunning = false;
+let timerInterval = null;
+let plannedSeconds = 1500;
+let elapsedSeconds = 0;
+let activeStartedAt = null;
+let accumulatedBeforeRun = 0;
 
-function configured(){return SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.includes("YOUR_")&&!SUPABASE_ANON_KEY.includes("YOUR_")}
+const $ = id => document.getElementById(id);
+const pad = n => String(Math.max(0,Math.floor(n))).padStart(2,"0");
+const fmtMin = m => {
+  m = Number(m)||0;
+  if(m < 60) return `${Math.round(m)}m`;
+  return `${Math.floor(m/60)}h ${Math.round(m%60)}m`;
+};
+const dateKey = d => new Date(d).toLocaleDateString("en-CA");
+const todayKey = () => dateKey(new Date());
 
-// Default StudyFlow subjects. Keep these above populateSubjects() so the login script
-// cannot fail before the Google button gets its click handler.
-const DEFAULT_SUBJECTS=[
-  "Financial Reporting",
-  "Corporate Finance",
-  "Portfolio Management",
-  "Economics",
-  "Quantitative Methods",
-  "Fixed Income",
-  "Equity Investments",
-  "Derivatives",
-  "Alternative Investments",
-  "Ethics",
-  "Other"
+const DEFAULT_SUBJECTS = [
+  "CFA Level 1","Financial Reporting","Corporate Finance","Portfolio Management",
+  "Economics","Quantitative Methods","Fixed Income","Equity Investments",
+  "Derivatives","Alternative Investments","Ethics","Audit","Tax","Other"
 ];
-function msg(type,text){$("authError").style.display=type==="error"?"block":"none";$("authSuccess").style.display=type==="success"?"block":"none";if(type==="error")$("authError").textContent=text;if(type==="success")$("authSuccess").textContent=text}
-function clearMsg(){msg("none","")}
 
-$("googleBtn").addEventListener("click",async()=>{
-  clearMsg();
-  const btn=$("googleBtn");
-  const original=btn.innerHTML;
-  btn.disabled=true;
-  btn.innerHTML="<span>Opening Google…</span>";
+function configured(){
+  return SUPABASE_URL.startsWith("https://") && !!SUPABASE_ANON_KEY;
+}
+
+function showAuthError(message){
+  const box = $("authError");
+  box.style.display = "block";
+  box.textContent = message;
+}
+
+function clearAuthError(){
+  $("authError").style.display = "none";
+  $("authError").textContent = "";
+}
+
+/* ---------- AUTH ---------- */
+
+async function boot(){
+  if(!configured()){
+    $("configWarning").classList.remove("hidden");
+    $("googleBtn").disabled = true;
+    return;
+  }
+
+  db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // OAuth can return an error in the query string. Never silently return to login.
+  const params = new URLSearchParams(window.location.search);
+  const oauthError = params.get("error_description") || params.get("error");
+  if(oauthError){
+    showAuthError("Google sign-in failed: " + decodeURIComponent(oauthError.replace(/\+/g," ")));
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  const {data:{session}, error} = await db.auth.getSession();
+  if(error){
+    console.error("getSession error:", error);
+    showAuthError("Could not restore your session: " + error.message);
+  } else if(session){
+    await startApp(session.user);
+    return;
+  }
+
+  db.auth.onAuthStateChange(async(event, session)=>{
+    console.log("Supabase auth event:", event);
+    if(event === "SIGNED_IN" && session){
+      await startApp(session.user);
+    }
+    if(event === "SIGNED_OUT"){
+      currentUser = null;
+      sessions = [];
+      $("app").classList.add("hidden");
+      $("authScreen").classList.remove("hidden");
+    }
+  });
+}
+
+$("googleBtn").addEventListener("click", async()=>{
+  clearAuthError();
+  const btn = $("googleBtn");
+  btn.disabled = true;
+  btn.textContent = "Opening Google…";
 
   try{
-    if(!configured()) throw new Error("Supabase is not configured.");
-    if(!window.supabase) throw new Error("Supabase library did not load. Please refresh the page.");
+    if(!db) throw new Error("Supabase is not connected. Refresh the page and try again.");
 
-    if(!db){
-      db=window.supabase.createClient(SUPABASE_PROJECT_URL,SUPABASE_ANON_KEY);
-    }
-
-    const {data,error}=await db.auth.signInWithOAuth({
-      provider:"google",
-      options:{
-        redirectTo:"https://thisisayushgupta.github.io/studyflow/"
+    const {error} = await db.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: SITE_URL,
+        scopes: "openid email profile"
       }
     });
 
     if(error) throw error;
-
-    // Normally supabase-js redirects automatically in the browser.
-    // If it returns a URL instead, explicitly navigate there.
-    if(data && data.url && location.href.indexOf("supabase.co")===-1){
-      window.location.assign(data.url);
-    }
-  }catch(err){
-    console.error("StudyFlow Google OAuth error:",err);
-    msg("error",err?.message||"Could not start Google sign-in.");
-    btn.disabled=false;
-    btn.innerHTML=original;
+    // Supabase redirects automatically. If it doesn't, the auth library will expose the error.
+  }catch(error){
+    console.error("Google OAuth error:", error);
+    showAuthError(error.message || "Could not start Google sign-in.");
+    btn.disabled = false;
+    btn.innerHTML = `
+      <span class="google-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path fill="#4285F4" d="M21.35 12.23c0-.7-.06-1.38-.18-2.03H12v3.84h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.2z"/>
+          <path fill="#34A853" d="M12 21.75c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.7-1.72-5.47-4.03H3.28v2.53A9.75 9.75 0 0 0 12 21.75z"/>
+          <path fill="#FBBC05" d="M6.53 13.84A5.86 5.86 0 0 1 6.22 12c0-.64.11-1.26.31-1.84V7.63H3.28A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.06 1.03 4.37l3.25-2.53z"/>
+          <path fill="#EA4335" d="M12 6.13c1.43 0 2.72.49 3.73 1.45l2.8-2.8C16.84 3.16 14.63 2.25 12 2.25a9.75 9.75 0 0 0-5.47 1.68l3.25 2.53C10.55 5.54 11.22 5.13 12 5.13z"/>
+        </svg>
+      </span> Continue with Google`;
   }
 });
 
-function getSavedSubjects(){
-  try{
-    const saved=JSON.parse(localStorage.getItem("studyflow_subjects")||"null");
-    return Array.isArray(saved)?saved.filter(x=>typeof x==="string"&&x.trim()):[];
-  }catch(e){return []}
+async function startApp(user){
+  currentUser = user;
+  $("authScreen").classList.add("hidden");
+  $("app").classList.remove("hidden");
+  $("userEmail").textContent = user.email || "Google account";
+  $("settingsEmail").textContent = user.email || "Google account";
+  await loadSubjects();
+  loadTimerSettings();
+  await loadSessions();
+  renderAll();
 }
 
-function saveSubjects(list){
-  const clean=[...new Set(list.map(x=>String(x).trim()).filter(Boolean))];
-  localStorage.setItem("studyflow_subjects",JSON.stringify(clean));
-  return clean;
+async function logout(){
+  stopTimer();
+  if(db) await db.auth.signOut();
+  currentUser = null;
+  sessions = [];
+  $("app").classList.add("hidden");
+  $("authScreen").classList.remove("hidden");
 }
 
-function populateSubjects(preferred=""){
-  const select=$("subject");
-  if(!select)return;
+/* ---------- SUBJECTS ---------- */
 
-  const historySubjects=sessions.map(s=>s.subject||"").filter(Boolean);
-  const subjects=saveSubjects([
-    ...getSavedSubjects(),
-    ...DEFAULT_SUBJECTS,
-    ...historySubjects
-  ]);
+let subjectList = [];
 
-  const current=preferred || select.value || subjects[0] || "";
-  select.innerHTML="";
-  subjects.forEach(subject=>{
-    const option=document.createElement("option");
-    option.value=subject;
-    option.textContent=subject;
-    select.appendChild(option);
+async function loadSubjects(){
+  const local = JSON.parse(localStorage.getItem("studyflow_subjects") || "[]");
+  subjectList = [...new Set([...DEFAULT_SUBJECTS, ...local])];
+
+  // Also learn subjects already present in this user's cloud history.
+  const {data} = await db.from("study_sessions").select("subject").limit(1000);
+  if(data){
+    subjectList = [...new Set([...subjectList, ...data.map(x=>x.subject).filter(Boolean)])];
+  }
+  renderSubjectSelects();
+}
+
+function renderSubjectSelects(){
+  ["subject","manualSubject"].forEach(id=>{
+    const el = $(id);
+    if(!el) return;
+    const current = el.value;
+    el.innerHTML = subjectList.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join("") +
+      `<option value="__new__">＋ Create new subject</option>`;
+    if(current && subjectList.includes(current)) el.value=current;
   });
-
-  const create=document.createElement("option");
-  create.value="__create_new__";
-  create.textContent="＋ Create new subject";
-  select.appendChild(create);
-
-  if(subjects.includes(current)) select.value=current;
-  else if(subjects.length) select.value=subjects[0];
 }
 
-function createNewSubject(){
-  const name=prompt("Enter the new subject name:");
-  if(name===null)return;
-
-  const subject=name.trim();
-  if(!subject){
-    alert("Please enter a subject name.");
-    return;
-  }
-
-  const existing=getSavedSubjects();
-  const match=[...existing,...DEFAULT_SUBJECTS,...sessions.map(s=>s.subject||"")]
-    .find(x=>String(x).trim().toLowerCase()===subject.toLowerCase());
-
-  if(match){
-    populateSubjects(match);
-    return;
-  }
-
-  saveSubjects([...existing,subject]);
-  populateSubjects(subject);
-  $("syncStatus").textContent="☁ Subject added";
+function addSubject(){
+  const name = prompt("Enter the new subject name:");
+  if(!name) return;
+  const clean = name.trim();
+  if(!clean) return;
+  if(!subjectList.some(x=>x.toLowerCase()===clean.toLowerCase())) subjectList.push(clean);
+  localStorage.setItem("studyflow_subjects", JSON.stringify(subjectList));
+  renderSubjectSelects();
+  $("subject").value = clean;
 }
 
 $("subject").addEventListener("change",()=>{
-  if($("subject").value==="__create_new__"){
-    const previous=getSavedSubjects()[0] || sessions[0]?.subject || DEFAULT_SUBJECTS[0] || "";
-    createNewSubject();
-    if(!$("subject").value || $("subject").value==="__create_new__") populateSubjects(previous);
-  }
+  if($("subject").value === "__new__") addSubject();
+});
+$("manualSubject").addEventListener("change",()=>{
+  if($("manualSubject").value === "__new__") addSubject();
 });
 
-async function saveSession(minutes){
- const subject=$("subject").value.trim()||"Uncategorized",notes=$("notes").value.trim();
- saveSubjects([...getSavedSubjects(),subject]);
- minutes=Math.max(1,Math.round(Number(minutes)));
- $("syncStatus").textContent="☁ Saving…";
- const {data,error}=await db.from("study_sessions").insert({user_id:currentUser.id,subject,minutes,notes}).select("id,created_at,subject,minutes,notes").single();
- if(error){$("syncStatus").textContent="⚠ Save failed";alert("Cloud save failed: "+(error.message||"Unknown Supabase error"));console.error("Supabase insert error:",error);return false}
- sessions.unshift(data);$("syncStatus").textContent="☁ Cloud synced";renderAll();return true;
-}
-function getElapsedSeconds(){
-  if(timerRunning && sessionStartedAt){
-    return Math.max(0, sessionAccumulatedSeconds + Math.floor((Date.now()-sessionStartedAt)/1000));
-  }
-  return Math.max(0, sessionAccumulatedSeconds);
-}
-function persistTimer(){
-  sessionElapsedSeconds=getElapsedSeconds();
-  localStorage.setItem("studyflow_timer",timerSeconds);
-  localStorage.setItem("studyflow_elapsed",sessionElapsedSeconds);
-  localStorage.setItem("studyflow_accumulated",sessionAccumulatedSeconds);
-  if(sessionStartedAt) localStorage.setItem("studyflow_startedAt",sessionStartedAt);
-  else localStorage.removeItem("studyflow_startedAt");
-}
+/* ---------- TIMER ---------- */
+
 function renderTimer(){
-  sessionElapsedSeconds=getElapsedSeconds();
-  $("timer").textContent=`${pad(Math.floor(timerSeconds/60))}:${pad(timerSeconds%60)}`;
-  $("startBtn").textContent=timerRunning?"Pause":"Start";
-  const mins=Math.floor(sessionElapsedSeconds/60);
-  $("saveBtn").disabled=mins<1 || sessionSaving;
-  $("saveBtn").textContent=sessionSaving?"Saving…":"Save Session";
+  const s = Math.max(0, Math.round(timerRunning ? elapsedSeconds + (Date.now()-activeStartedAt)/1000 : elapsedSeconds));
+  const remaining = Math.max(0, plannedSeconds - s);
+  $("timer").textContent = `${pad(Math.floor(remaining/60))}:${pad(remaining%60)}`;
+  $("startBtn").textContent = timerRunning ? "Pause" : (s > 0 ? "Resume" : "Start");
+  $("saveSessionBtn").disabled = s < 60;
 }
-function resetTimer(){
-  clearInterval(interval);
-  timerRunning=false;
-  sessionSaving=false;
-  sessionStartedAt=null;
-  sessionAccumulatedSeconds=0;
-  sessionElapsedSeconds=0;
-  const mins=Math.max(1,Math.round(Number($("duration").value||25)));
-  $("duration").value=mins;
-  timerSeconds=mins*60;
-  sessionInitialSeconds=timerSeconds;
-  localStorage.removeItem("studyflow_timer");
-  localStorage.removeItem("studyflow_elapsed");
-  localStorage.removeItem("studyflow_accumulated");
-  localStorage.removeItem("studyflow_startedAt");
+
+function persistTimer(){
+  localStorage.setItem("studyflow_timer_state", JSON.stringify({
+    plannedSeconds, elapsedSeconds, timerRunning:false, savedAt:Date.now()
+  }));
+}
+
+function loadTimerSettings(){
+  const def = Math.max(1, Math.round(Number(localStorage.getItem("studyflow_default") || 25)));
+  $("defaultDuration").value = def;
+  $("duration").value = def;
+
+  const saved = JSON.parse(localStorage.getItem("studyflow_timer_state") || "null");
+  if(saved && Number.isFinite(saved.elapsedSeconds)){
+    plannedSeconds = Math.max(60, Number(saved.plannedSeconds)||def*60);
+    elapsedSeconds = Math.max(0, Number(saved.elapsedSeconds)||0);
+  }else{
+    plannedSeconds = def*60;
+    elapsedSeconds = 0;
+  }
   renderTimer();
 }
-function startTick(){
-  clearInterval(interval);
-  interval=setInterval(async()=>{
-    if(!timerRunning)return;
-    const elapsed=getElapsedSeconds();
-    timerSeconds=Math.max(0,sessionInitialSeconds-elapsed);
-    sessionElapsedSeconds=elapsed;
+
+function getElapsed(){
+  return Math.max(0, Math.round(timerRunning
+    ? elapsedSeconds + (Date.now()-activeStartedAt)/1000
+    : elapsedSeconds));
+}
+
+function stopTimer(){
+  if(timerInterval) clearInterval(timerInterval);
+  timerInterval = null;
+  if(timerRunning){
+    elapsedSeconds = getElapsed();
+    timerRunning = false;
+  }
+  persistTimer();
+  renderTimer();
+}
+
+function toggleTimer(){
+  if(timerRunning){
+    elapsedSeconds = getElapsed();
+    timerRunning = false;
+    clearInterval(timerInterval);
+    timerInterval = null;
     persistTimer();
     renderTimer();
+    return;
+  }
 
-    if(timerSeconds<=0){
-      clearInterval(interval);
-      timerRunning=false;
-      sessionAccumulatedSeconds=sessionInitialSeconds;
-      sessionStartedAt=null;
-      sessionElapsedSeconds=sessionInitialSeconds;
-      sessionSaving=true;
+  if(elapsedSeconds >= plannedSeconds){
+    elapsedSeconds = 0;
+  }
+
+  activeStartedAt = Date.now();
+  timerRunning = true;
+  timerInterval = setInterval(async()=>{
+    const elapsed = getElapsed();
+    renderTimer();
+
+    if(elapsed >= plannedSeconds){
+      elapsedSeconds = plannedSeconds;
+      timerRunning = false;
+      clearInterval(timerInterval);
+      timerInterval = null;
       renderTimer();
-      const minutes=Math.max(1,Math.floor(sessionElapsedSeconds/60));
-      const ok=await saveSession(minutes);
-      alert(ok?"Focus session complete and saved to the cloud!":"Focus session complete, but it could not be saved.");
+      await saveSessionMinutes(Math.floor(plannedSeconds/60), true);
       resetTimer();
     }
   },500);
+
+  renderTimer();
 }
-function toggleTimer(){
-  if(sessionSaving)return;
 
-  if(timerRunning){
-    sessionAccumulatedSeconds=getElapsedSeconds();
-    sessionElapsedSeconds=sessionAccumulatedSeconds;
-    timerSeconds=Math.max(0,sessionInitialSeconds-sessionAccumulatedSeconds);
-    sessionStartedAt=null;
-    timerRunning=false;
-    clearInterval(interval);
-    persistTimer();
-    renderTimer();
-    return;
-  }
-
-  if(timerSeconds<=0)resetTimer();
-
-  // Start/restart the current run without losing accumulated paused time.
-  sessionStartedAt=Date.now();
-  timerRunning=true;
+function resetTimer(){
+  stopTimer();
+  const mins = Math.max(1, Math.round(Number($("duration").value || 25)));
+  $("duration").value = mins;
+  plannedSeconds = mins*60;
+  elapsedSeconds = 0;
+  activeStartedAt = null;
   persistTimer();
   renderTimer();
-  startTick();
 }
+
+$("duration").addEventListener("change",()=>{
+  if(timerRunning) return;
+  const mins = Math.max(1, Math.round(Number($("duration").value || 25)));
+  $("duration").value = mins;
+  plannedSeconds = mins*60;
+  elapsedSeconds = 0;
+  persistTimer();
+  renderTimer();
+});
+
+$("defaultDuration").addEventListener("change",()=>{
+  const mins = Math.max(1, Math.round(Number($("defaultDuration").value || 25)));
+  $("defaultDuration").value = mins;
+  localStorage.setItem("studyflow_default", mins);
+  if(!timerRunning) resetTimer();
+});
+
 async function savePartialSession(){
-  if(sessionSaving)return;
+  const seconds = getElapsed();
+  const minutes = Math.floor(seconds/60);
+  if(minutes < 1){
+    alert("Study for at least 1 minute before saving.");
+    return;
+  }
+  const ok = await saveSessionMinutes(minutes, false);
+  if(ok) resetTimer();
+}
 
-  // Calculate from real elapsed time so mobile browser throttling doesn't lose minutes.
-  const elapsedSeconds=getElapsedSeconds();
-  const elapsedMinutes=Math.floor(elapsedSeconds/60);
+async function saveSessionMinutes(minutes, automatic){
+  const subject = $("subject").value === "__new__" ? "Other" : ($("subject").value || "Other");
+  const notes = $("notes").value.trim();
 
-  if(elapsedMinutes<1){
-    alert("Study for at least 1 full minute before saving.");
+  $("syncStatus").textContent = "☁ Saving…";
+
+  const {data,error} = await db.from("study_sessions").insert({
+    user_id: currentUser.id,
+    subject,
+    minutes: Math.max(1, Math.round(minutes)),
+    notes
+  }).select("id,created_at,subject,minutes,notes").single();
+
+  if(error){
+    $("syncStatus").textContent = "⚠ Save failed";
+    console.error("Supabase insert error:", error);
+    alert("Could not save the session: " + error.message);
+    return false;
+  }
+
+  sessions.unshift(data);
+  $("syncStatus").textContent = "☁ Cloud synced";
+  renderAll();
+
+  if(automatic) alert(`Completed session saved: ${Math.round(minutes)}m.`);
+  else alert(`Saved ${Math.round(minutes)}m of focused study time.`);
+  return true;
+}
+
+/* ---------- DATA ---------- */
+
+async function loadSessions(){
+  $("syncStatus").textContent = "☁ Syncing…";
+  const {data,error} = await db.from("study_sessions")
+    .select("id,created_at,subject,minutes,notes")
+    .order("created_at",{ascending:false});
+
+  if(error){
+    console.error(error);
+    $("syncStatus").textContent = "⚠ Sync error";
+    return;
+  }
+  sessions = data || [];
+  $("syncStatus").textContent = "☁ Cloud synced";
+}
+
+function getDayMinutes(key){
+  return sessions.filter(s=>dateKey(s.created_at)===key)
+    .reduce((a,s)=>a+Number(s.minutes||0),0);
+}
+
+function streak(){
+  let d = new Date(), key = dateKey(d), count = 0;
+  if(getDayMinutes(key)===0){
+    d.setDate(d.getDate()-1);
+    key = dateKey(d);
+    if(getDayMinutes(key)===0) return 0;
+  }
+  while(getDayMinutes(key)>0){
+    count++;
+    d.setDate(d.getDate()-1);
+    key=dateKey(d);
+  }
+  return count;
+}
+
+function renderKPIs(){
+  let week=0;
+  for(let i=0;i<7;i++){
+    const d=new Date();d.setDate(d.getDate()-i);
+    week+=getDayMinutes(dateKey(d));
+  }
+  $("kToday").textContent=fmtMin(getDayMinutes(todayKey()));
+  $("kWeek").textContent=(week/60).toFixed(1)+"h";
+  $("kSessions").textContent=sessions.length;
+  $("kStreak").textContent=streak();
+}
+
+function makeChart(id,days){
+  const el=$(id);el.innerHTML="";
+  const vals=[];
+  for(let i=days-1;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    vals.push({
+      label:d.toLocaleDateString(undefined,{weekday:"short"}),
+      value:getDayMinutes(dateKey(d))
+    });
+  }
+  const max=Math.max(60,...vals.map(x=>x.value));
+  vals.forEach(x=>{
+    const w=document.createElement("div");
+    w.className="bar-wrap";
+    w.innerHTML=`<div class="bar-value">${x.value?fmtMin(x.value):""}</div>
+      <div class="bar" style="height:${Math.max(2,x.value/max*88)}%"></div>
+      <div class="bar-label">${x.label}</div>`;
+    el.appendChild(w);
+  });
+}
+
+function esc(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c]));
+}
+
+function tableHTML(list){
+  if(!list.length) return '<div class="empty">No study sessions yet.</div>';
+
+  return `<table class="table">
+    <thead><tr><th>Date</th><th>Subject</th><th>Duration</th><th>Notes</th><th></th></tr></thead>
+    <tbody>
+    ${list.map(s=>`
+      <tr>
+        <td>${new Date(s.created_at).toLocaleString([],{month:"short",day:"numeric",year:"numeric",hour:"2-digit",minute:"2-digit"})}</td>
+        <td><span class="pill">${esc(s.subject)}</span></td>
+        <td>${fmtMin(Number(s.minutes))}</td>
+        <td>${esc(s.notes||"—")}</td>
+        <td><button class="delete-btn" onclick="deleteSession('${s.id}')">Delete</button></td>
+      </tr>`).join("")}
+    </tbody>
+  </table>`;
+}
+
+function renderHistory(){
+  $("recent").innerHTML = tableHTML(sessions.slice(0,6));
+  $("fullHistory").innerHTML = tableHTML(sessions);
+}
+
+function renderAnalytics(){
+  const total=sessions.reduce((a,s)=>a+Number(s.minutes||0),0);
+  $("aTotal").textContent=fmtMin(total);
+  $("aAvg").textContent=fmtMin(sessions.length?total/sessions.length:0);
+
+  const map={};
+  sessions.forEach(s=>{
+    const name=s.subject||"Other";
+    map[name]=(map[name]||0)+Number(s.minutes||0);
+  });
+  const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]);
+  const mx=arr[0]?.[1]||1;
+  $("subjects").innerHTML=arr.length
+    ? arr.slice(0,10).map(([name,value])=>`
+      <div class="subject">
+        <span>${esc(name)}</span>
+        <div class="progress"><i style="width:${value/mx*100}%"></i></div>
+        <b>${fmtMin(value)}</b>
+      </div>`).join("")
+    : '<div class="empty">No subject data yet.</div>';
+
+  $("heatmap").innerHTML="";
+  for(let i=27;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const v=getDayMinutes(dateKey(d));
+    const c=v>=180?"l4":v>=120?"l3":v>=60?"l2":v>0?"l1":"";
+    const x=document.createElement("div");
+    x.className="day "+c;
+    x.title=`${dateKey(d)} — ${fmtMin(v)}`;
+    $("heatmap").appendChild(x);
+  }
+
+  makeChart("analyticsChart",14);
+}
+
+function renderAll(){
+  $("today").textContent=new Date().toLocaleDateString(undefined,{
+    weekday:"long",month:"long",day:"numeric",year:"numeric"
+  });
+  renderKPIs();
+  makeChart("weekChart",7);
+  renderHistory();
+  renderAnalytics();
+  renderTimer();
+}
+
+/* ---------- MANUAL SESSION ---------- */
+
+function openManualModal(){
+  $("manualModal").classList.remove("hidden");
+  $("manualDate").value=todayKey();
+  $("manualStart").value="";
+  $("manualHours").value=0;
+  $("manualMinutes").value=30;
+  $("manualNotes").value="";
+  renderSubjectSelects();
+}
+
+function closeManualModal(){
+  $("manualModal").classList.add("hidden");
+}
+
+async function saveManualSession(){
+  const subject = $("manualSubject").value;
+  if(subject==="__new__"){
+    addSubject();
     return;
   }
 
-  const wasRunning=timerRunning;
-  if(wasRunning){
-    sessionAccumulatedSeconds=elapsedSeconds;
-    sessionElapsedSeconds=elapsedSeconds;
-    timerSeconds=Math.max(0,sessionInitialSeconds-elapsedSeconds);
-    sessionStartedAt=null;
-    timerRunning=false;
-    clearInterval(interval);
-    persistTimer();
+  const hours=Math.max(0,Math.floor(Number($("manualHours").value)||0));
+  const minutes=Math.max(0,Math.min(59,Math.floor(Number($("manualMinutes").value)||0)));
+  const total=hours*60+minutes;
+
+  if(total<1){
+    alert("Enter at least 1 minute.");
+    return;
   }
 
-  sessionSaving=true;
-  renderTimer();
+  const date=$("manualDate").value || todayKey();
+  const time=$("manualStart").value || "12:00";
+  const createdAt=new Date(`${date}T${time}:00`);
 
-  const ok=await saveSession(elapsedMinutes);
-
-  if(ok){
-    alert(`Saved ${fmtMin(elapsedMinutes)} of focused study time.`);
-    resetTimer();
-  }else{
-    sessionSaving=false;
-    if(wasRunning){
-      sessionStartedAt=Date.now();
-      timerRunning=true;
-      persistTimer();
-      startTick();
-    }
-    renderTimer();
+  if(Number.isNaN(createdAt.getTime())){
+    alert("Please enter a valid date.");
+    return;
   }
-}
-$("duration").addEventListener("change",()=>{let v=Math.max(1,Math.round(Number($("duration").value||25)));$("duration").value=v;if(!timerRunning)resetTimer()});
-$("defaultDuration").addEventListener("change",()=>{const v=Math.max(1,Number($("defaultDuration").value||25));localStorage.setItem("studyflow_default",v);$("duration").value=v;if(!timerRunning)resetTimer()});
-function loadSettings(){
-  const d=Math.max(1,Math.round(Number(localStorage.getItem("studyflow_default")||25)));
-  $("defaultDuration").value=d;
-  $("duration").value=d;
 
-  const savedTimer=localStorage.getItem("studyflow_timer");
-  const savedAccum=Number(localStorage.getItem("studyflow_accumulated")||localStorage.getItem("studyflow_elapsed")||0);
-  const savedStarted=Number(localStorage.getItem("studyflow_startedAt")||0);
+  $("syncStatus").textContent="☁ Saving…";
 
-  if(savedTimer!==null){
-    timerSeconds=Math.max(0,Number(savedTimer));
-    sessionAccumulatedSeconds=Math.max(0,savedAccum);
-    sessionElapsedSeconds=sessionAccumulatedSeconds;
-    sessionInitialSeconds=timerSeconds+sessionAccumulatedSeconds;
+  const {data,error}=await db.from("study_sessions").insert({
+    user_id:currentUser.id,
+    subject:subject || "Other",
+    minutes:total,
+    notes:$("manualNotes").value.trim(),
+    created_at:createdAt.toISOString()
+  }).select("id,created_at,subject,minutes,notes").single();
 
-    if(savedStarted && timerSeconds>0){
-      sessionStartedAt=savedStarted;
-      timerRunning=true;
-      const liveElapsed=getElapsedSeconds();
-      sessionElapsedSeconds=liveElapsed;
-      timerSeconds=Math.max(0,sessionInitialSeconds-liveElapsed);
-      persistTimer();
-      startTick();
-    }else{
-      sessionStartedAt=null;
-      timerRunning=false;
-    }
-  }else{
-    timerSeconds=d*60;
-    sessionInitialSeconds=timerSeconds;
-    sessionAccumulatedSeconds=0;
-    sessionElapsedSeconds=0;
-    sessionStartedAt=null;
+  if(error){
+    $("syncStatus").textContent="⚠ Save failed";
+    console.error(error);
+    alert("Could not save the session: "+error.message);
+    return;
   }
-  renderTimer();
+
+  sessions.unshift(data);
+  sessions.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  $("syncStatus").textContent="☁ Cloud synced";
+  closeManualModal();
+  renderAll();
+  alert(`Saved ${fmtMin(total)} to StudyFlow.`);
 }
 
-function getDayMinutes(key){return sessions.filter(s=>dateKey(s.created_at)===key).reduce((a,s)=>a+Number(s.minutes),0)}
-function streak(){
- let d=new Date(),key=dateKey(d),count=0;
- if(getDayMinutes(key)===0){d.setDate(d.getDate()-1);key=dateKey(d);if(getDayMinutes(key)===0)return 0}
- while(getDayMinutes(key)>0){count++;d.setDate(d.getDate()-1);key=dateKey(d)}return count
-}
-function renderKPIs(){
- const today=getDayMinutes(todayKey());let week=0;
- for(let i=0;i<7;i++){let d=new Date();d.setDate(d.getDate()-i);week+=getDayMinutes(dateKey(d))}
- $("kToday").textContent=fmtMin(today);$("kWeek").textContent=(week/60).toFixed(1)+"h";$("kSessions").textContent=sessions.length;$("kStreak").textContent=streak();
-}
-function makeChart(id,days){
- const el=$(id);el.innerHTML="";let vals=[];
- for(let i=days-1;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);vals.push({label:d.toLocaleDateString(undefined,{weekday:"short"}),v:getDayMinutes(dateKey(d))})}
- const max=Math.max(60,...vals.map(x=>x.v));
- vals.forEach(x=>{let w=document.createElement("div");w.className="bar-wrap";w.innerHTML=`<div class="bar-value">${x.v?fmtMin(x.v):""}</div><div class="bar" style="height:${Math.max(2,x.v/max*88)}%"></div><div class="bar-label">${x.label}</div>`;el.appendChild(w)})
-}
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function tableHTML(list){
- if(!list.length)return '<div class="empty">No study sessions yet. Complete your first timer session.</div>';
- return `<table class="table"><thead><tr><th>Date</th><th>Subject</th><th>Duration</th><th>Notes</th><th></th></tr></thead><tbody>${list.map(s=>`<tr><td>${new Date(s.created_at).toLocaleString([],{month:"short",day:"numeric",hour:"2-digit",minute:"2-digit"})}</td><td><span class="pill">${esc(s.subject)}</span></td><td>${fmtMin(Number(s.minutes))}</td><td>${esc(s.notes||"—")}</td><td><button class="history-delete" onclick="deleteSession(${Number(s.id)})" title="Delete this session">Delete</button></td></tr>`).join("")}</tbody></table>`
-}
-function renderRecent(){$("recent").innerHTML=tableHTML(sessions.slice(0,6))}
-function renderHistory(){$("fullHistory").innerHTML=tableHTML(sessions)}
+/* ---------- DELETE ---------- */
 
 async function deleteSession(id){
- const session=sessions.find(s=>Number(s.id)===Number(id));
- if(!session)return;
- const label=`${session.subject||"session"} — ${fmtMin(Number(session.minutes))}`;
- if(!confirm(`Delete this study session?\n\n${label}\n\nThis cannot be undone.`))return;
- $("syncStatus").textContent="☁ Deleting…";
- const {error}=await db.from("study_sessions").delete().eq("id",id).eq("user_id",currentUser.id);
- if(error){
-   $("syncStatus").textContent="⚠ Delete failed";
-   alert("Could not delete this session: "+(error.message||"Unknown Supabase error"));
-   console.error("Supabase delete error:",error);
-   return;
- }
- sessions=sessions.filter(s=>Number(s.id)!==Number(id));
- $("syncStatus").textContent="☁ Cloud synced";
- renderAll();
-}
-function renderAnalytics(){
- const total=sessions.reduce((a,s)=>a+Number(s.minutes),0);$("aTotal").textContent=fmtMin(total);$("aAvg").textContent=fmtMin(sessions.length?total/sessions.length:0);
- const map={};sessions.forEach(s=>map[s.subject||"Uncategorized"]=(map[s.subject||"Uncategorized"]||0)+Number(s.minutes));
- const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]),mx=arr[0]?.[1]||1;
- $("subjects").innerHTML=arr.length?arr.slice(0,10).map(([n,v])=>`<div class="subject"><span>${esc(n)}</span><div class="progress"><i style="width:${v/mx*100}%"></i></div><b>${fmtMin(v)}</b></div>`).join(""):'<div class="empty">No subject data yet.</div>';
- $("heatmap").innerHTML="";
- for(let i=27;i>=0;i--){let d=new Date();d.setDate(d.getDate()-i);let v=getDayMinutes(dateKey(d));let c=v>=180?"l4":v>=120?"l3":v>=60?"l2":v>0?"l1":"";let x=document.createElement("div");x.className="day "+c;x.title=`${dateKey(d)} — ${fmtMin(v)}`;$("heatmap").appendChild(x)}
- makeChart("analyticsChart",14)
-}
-function renderAll(){
- $("today").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",month:"long",day:"numeric",year:"numeric"});
- renderKPIs();makeChart("weekChart",7);renderRecent();renderHistory();renderAnalytics()
-}
-function showView(id,btn){
- document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));$(id).classList.add("active");
- document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));btn.classList.add("active");
- $("pageTitle").textContent={dashboard:"Study Dashboard",analytics:"Analytics",history:"Study History",settings:"Settings"}[id]
-}
-async function deleteAllSessions(){
- if(!sessions.length||!confirm("Delete all your cloud study history? This cannot be undone."))return;
- $("syncStatus").textContent="☁ Deleting…";
- const {error}=await db.from("study_sessions").delete().eq("user_id",currentUser.id);
- if(error){alert("Could not delete history.");console.error(error);$("syncStatus").textContent="⚠ Delete failed";return}
- sessions=[];$("syncStatus").textContent="☁ Cloud synced";renderAll()
-}
-function exportData(){
- const payload={app:"StudyFlow",version:2,user:currentUser.email,exportedAt:new Date().toISOString(),sessions};
- const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="studyflow-history.json";a.click();URL.revokeObjectURL(a.href)
-}
-window.addEventListener("beforeunload",()=>{localStorage.setItem("studyflow_timer",timerSeconds);localStorage.setItem("studyflow_elapsed",sessionElapsedSeconds)});
+  const session=sessions.find(s=>String(s.id)===String(id));
+  if(!session) return;
 
-async function boot(){
- if(!configured()){$("configWarning").classList.remove("hidden");$("googleBtn").disabled=true;return}
- db=window.supabase.createClient(SUPABASE_PROJECT_URL,SUPABASE_ANON_KEY);
- const {data:{session}}=await db.auth.getSession();
- if(session)await startApp(session.user);
- db.auth.onAuthStateChange(async(event,session)=>{
-   if(event==="SIGNED_OUT"){currentUser=null;$("app").classList.add("hidden");$("authScreen").classList.remove("hidden")}
-   if(event==="SIGNED_IN"&&session&&!currentUser)await startApp(session.user)
- });
+  if(!confirm(`Delete this ${fmtMin(session.minutes)} ${session.subject} session?`)) return;
+
+  $("syncStatus").textContent="☁ Deleting…";
+  const {error}=await db.from("study_sessions").delete().eq("id",id);
+
+  if(error){
+    $("syncStatus").textContent="⚠ Delete failed";
+    alert("Could not delete the session: "+error.message);
+    return;
+  }
+
+  sessions=sessions.filter(s=>String(s.id)!==String(id));
+  $("syncStatus").textContent="☁ Cloud synced";
+  renderAll();
 }
+
+async function deleteAllSessions(){
+  if(!sessions.length) return;
+  if(!confirm("Delete ALL your StudyFlow sessions? This cannot be undone.")) return;
+
+  $("syncStatus").textContent="☁ Deleting…";
+  const {error}=await db.from("study_sessions").delete().eq("user_id",currentUser.id);
+
+  if(error){
+    $("syncStatus").textContent="⚠ Delete failed";
+    alert("Could not delete history: "+error.message);
+    return;
+  }
+
+  sessions=[];
+  $("syncStatus").textContent="☁ Cloud synced";
+  renderAll();
+}
+
+/* ---------- NAV / EXPORT ---------- */
+
+function showView(id,btn){
+  document.querySelectorAll(".view").forEach(v=>v.classList.remove("active"));
+  $(id).classList.add("active");
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));
+  btn.classList.add("active");
+  $("pageTitle").textContent={
+    dashboard:"Study Dashboard",
+    analytics:"Analytics",
+    history:"Study History",
+    settings:"Settings"
+  }[id];
+}
+
+function exportData(){
+  const payload={
+    app:"StudyFlow",
+    exportedAt:new Date().toISOString(),
+    user:currentUser?.email,
+    sessions
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="studyflow-history.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+$("manualModal").addEventListener("click",e=>{
+  if(e.target.id==="manualModal") closeManualModal();
+});
+
+window.addEventListener("beforeunload",()=>{
+  if(timerRunning){
+    elapsedSeconds=getElapsed();
+    timerRunning=false;
+  }
+  persistTimer();
+});
+
 boot();
 </script>
 </body>
 </html>
-
