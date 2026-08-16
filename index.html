@@ -856,26 +856,57 @@ const dateKey=d=>new Date(d).toLocaleDateString("en-CA");
 const todayKey=()=>dateKey(new Date());
 
 function configured(){return SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.includes("YOUR_")&&!SUPABASE_ANON_KEY.includes("YOUR_")}
-populateSubjects();
+
+// Default StudyFlow subjects. Keep these above populateSubjects() so the login script
+// cannot fail before the Google button gets its click handler.
+const DEFAULT_SUBJECTS=[
+  "Financial Reporting",
+  "Corporate Finance",
+  "Portfolio Management",
+  "Economics",
+  "Quantitative Methods",
+  "Fixed Income",
+  "Equity Investments",
+  "Derivatives",
+  "Alternative Investments",
+  "Ethics",
+  "Other"
+];
 function msg(type,text){$("authError").style.display=type==="error"?"block":"none";$("authSuccess").style.display=type==="success"?"block":"none";if(type==="error")$("authError").textContent=text;if(type==="success")$("authSuccess").textContent=text}
 function clearMsg(){msg("none","")}
 
-$("googleBtn").addEventListener("click",()=>{
+$("googleBtn").addEventListener("click",async()=>{
   clearMsg();
   const btn=$("googleBtn");
-  btn.disabled=true;
   const original=btn.innerHTML;
+  btn.disabled=true;
   btn.innerHTML="<span>Opening Google…</span>";
 
   try{
-    // Use Supabase Auth's browser authorize endpoint directly.
-    // This avoids relying on the CDN SDK to perform the initial redirect.
-    const redirectTo="https://thisisayushgupta.github.io/studyflow/";
-    const authUrl = SUPABASE_PROJECT_URL + "/auth/v1/authorize?provider=google&redirect_to=" + encodeURIComponent(redirectTo);
-    window.location.href = authUrl;
+    if(!configured()) throw new Error("Supabase is not configured.");
+    if(!window.supabase) throw new Error("Supabase library did not load. Please refresh the page.");
+
+    if(!db){
+      db=window.supabase.createClient(SUPABASE_PROJECT_URL,SUPABASE_ANON_KEY);
+    }
+
+    const {data,error}=await db.auth.signInWithOAuth({
+      provider:"google",
+      options:{
+        redirectTo:"https://thisisayushgupta.github.io/studyflow/"
+      }
+    });
+
+    if(error) throw error;
+
+    // Normally supabase-js redirects automatically in the browser.
+    // If it returns a URL instead, explicitly navigate there.
+    if(data && data.url && location.href.indexOf("supabase.co")===-1){
+      window.location.assign(data.url);
+    }
   }catch(err){
-    console.error("Google sign-in error:",err);
-    msg("error", "Could not start Google sign-in: " + (err.message || "Unknown error"));
+    console.error("StudyFlow Google OAuth error:",err);
+    msg("error",err?.message||"Could not start Google sign-in.");
     btn.disabled=false;
     btn.innerHTML=original;
   }
@@ -1220,3 +1251,4 @@ boot();
 </script>
 </body>
 </html>
+
