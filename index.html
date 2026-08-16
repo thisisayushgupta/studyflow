@@ -713,6 +713,51 @@ input{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:1
 /* Save Session state */
 #saveBtn:disabled{opacity:.45;cursor:not-allowed}
 #saveBtn:not(:disabled){box-shadow:0 2px 8px rgba(0,0,0,.08)}
+
+.subject-select{
+  width:100%;
+  min-height:48px;
+  padding:12px 40px 12px 13px;
+  border:1px solid #e5e5e8;
+  border-radius:13px;
+  background:#f8f8f9;
+  color:#111;
+  font:inherit;
+  font-size:16px;
+  appearance:none;
+  -webkit-appearance:none;
+  background-image:linear-gradient(45deg,transparent 50%,#777 50%),linear-gradient(135deg,#777 50%,transparent 50%);
+  background-position:calc(100% - 18px) 21px,calc(100% - 12px) 21px;
+  background-size:6px 6px,6px 6px;
+  background-repeat:no-repeat;
+}
+.subject-select:focus{
+  outline:none;
+  background-color:#fff;
+  border-color:#bcbcc1;
+  box-shadow:0 0 0 3px rgba(0,0,0,.045);
+}
+
+</style>
+
+<style>
+/* Manual session logging */
+.manual-log-btn{margin-top:14px;width:100%;display:flex;align-items:center;justify-content:center;gap:7px;border:1px dashed #cfcfd4;background:#fafafa;color:#333;padding:11px 14px;border-radius:11px;font-weight:700;font-size:13px}
+.manual-log-btn:hover{background:#f3f3f5;border-color:#aaa}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.42);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px);display:none;align-items:center;justify-content:center;padding:18px;z-index:2000}
+.modal-backdrop.open{display:flex}
+.manual-modal{width:min(520px,100%);background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.2)}
+.manual-modal-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:18px}
+.manual-modal h2{margin:0;font-size:20px;letter-spacing:-.4px}
+.modal-close{width:34px;height:34px;border-radius:10px;background:#f1f1f3;color:#555;font-size:20px;line-height:1}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-field label{display:block;font-size:12px;color:#777;font-weight:650;margin:0 0 6px}
+.modal-field input,.modal-field select{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:10px;padding:11px 12px;outline:none}
+.modal-field input:focus,.modal-field select:focus{border-color:#aaa;background:#fff}
+.manual-hint{font-size:12px;color:#888;margin-top:12px;line-height:1.45}
+.modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
+.modal-actions .btn{min-width:110px}
+@media(max-width:600px){.manual-modal{padding:20px;border-radius:18px}.modal-grid{grid-template-columns:1fr 1fr}.modal-actions .btn{flex:1}.manual-hint{font-size:11px}}
 </style>
 <style>
 /* Google-only authentication */
@@ -781,10 +826,14 @@ input{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:1
       <div class="timer" id="timer">25:00</div>
       <div class="timer-controls"><button class="btn secondary" onclick="resetTimer()">Reset</button><button class="btn primary" id="startBtn" onclick="toggleTimer()">Start</button><button class="btn secondary" id="saveBtn" onclick="savePartialSession()" disabled>Save Session</button></div>
       <div class="session-row">
-        <div><label>Subject</label><input id="subject" placeholder="e.g. Financial Reporting"></div>
+        <div>
+          <label>Subject</label>
+          <select id="subject" class="subject-select" aria-label="Study subject"></select>
+        </div>
         <div><label>Duration (minutes)</label><input id="duration" type="number" min="1" step="1" value="25"></div>
       </div>
       <div style="margin-top:12px;text-align:left"><label class="notes-label">Notes (optional)</label><input id="notes" placeholder="What are you studying?"></div>
+      <button class="manual-log-btn" type="button" onclick="openManualLog()">＋ Log a past study session</button>
     </div>
     <div class="card cardpad"><h2 class="section-title">Last 7 days</h2><div class="chart" id="weekChart"></div><div style="margin-top:29px;color:#777;font-size:12px">■ Study minutes</div></div>
   </div>
@@ -801,10 +850,31 @@ input{width:100%;border:1px solid var(--line);background:#fafafa;border-radius:1
   <div class="card analytics-card" style="margin-top:20px"><h2 class="section-title">14-day trend</h2><div class="chart" id="analyticsChart"></div></div>
 </section>
 
-<section id="history" class="view"><div class="card history" style="margin-top:0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px"><h2 class="section-title" style="margin:0">Cloud study history</h2><button class="danger-link" style="color:#c33;background:none;font-size:12px;padding:5px" onclick="deleteAllSessions()">Delete all</button></div><div id="fullHistory"></div></div></section>
+<section id="history" class="view"><div class="card history" style="margin-top:0"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px"><h2 class="section-title" style="margin:0">Cloud study history</h2><div style="display:flex;align-items:center;gap:8px"><button class="btn secondary" style="padding:8px 11px;font-size:12px" onclick="openManualLog()">＋ Log session</button><button class="danger-link" style="color:#c33;background:none;font-size:12px;padding:5px" onclick="deleteAllSessions()">Delete all</button></div></div><div id="fullHistory"></div></div></section>
 
 <section id="settings" class="view"><div class="card analytics-card"><h2 class="section-title">Account & settings</h2><div class="settings-row"><div><b>Signed-in account</b><div class="subtitle" id="settingsEmail"></div></div></div><div class="settings-row"><div><b>Default timer</b><div class="subtitle">Minutes used when you reset</div></div><input id="defaultDuration" type="number" min="1" step="1" value="25" style="width:100px"></div><div class="settings-row"><div><b>Export cloud history</b><div class="subtitle">Download your sessions as JSON</div></div><button class="btn secondary" onclick="exportData()">Export</button></div><div class="settings-row"><div><b>Sign out</b><div class="subtitle">Your cloud data remains saved</div></div><button class="btn secondary" onclick="logout()">Log out</button></div></div></section>
 </main></div>
+
+
+<div id="manualLogModal" class="modal-backdrop" aria-hidden="true">
+  <div class="manual-modal" role="dialog" aria-modal="true" aria-labelledby="manualLogTitle">
+    <div class="manual-modal-header">
+      <div><h2 id="manualLogTitle">Log past study session</h2><div class="subtitle">Add time you tracked outside StudyFlow, such as with Apple Clock.</div></div>
+      <button class="modal-close" type="button" onclick="closeManualLog()" aria-label="Close">×</button>
+    </div>
+    <div class="modal-grid">
+      <div class="modal-field"><label for="manualSubject">Subject</label><select id="manualSubject"></select></div>
+      <div class="modal-field"><label for="manualDate">Date</label><input id="manualDate" type="date"></div>
+      <div class="modal-field"><label for="manualHours">Hours</label><input id="manualHours" type="number" min="0" max="99" step="1" value="0"></div>
+      <div class="modal-field"><label for="manualMinutes">Minutes</label><input id="manualMinutes" type="number" min="0" max="59" step="1" value="30"></div>
+      <div class="modal-field"><label for="manualTime">Start time (optional)</label><input id="manualTime" type="time"></div>
+      <div class="modal-field"><label for="manualNotes">Notes (optional)</label><input id="manualNotes" type="text" placeholder="e.g. Reading Chapter 8"></div>
+    </div>
+    <div class="manual-hint">The session will be added directly to your cloud history and included in your dashboard, analytics, streak, and subject totals.</div>
+    <div id="manualLogError" class="msg error"></div>
+    <div class="modal-actions"><button class="btn secondary" type="button" onclick="closeManualLog()">Cancel</button><button class="btn primary" id="manualSaveBtn" type="button" onclick="saveManualSession()">Save to StudyFlow</button></div>
+  </div>
+</div>
 
 <script>
 /* ============================================================
@@ -828,47 +898,219 @@ const dateKey=d=>new Date(d).toLocaleDateString("en-CA");
 const todayKey=()=>dateKey(new Date());
 
 function configured(){return SUPABASE_URL.startsWith("https://")&&!SUPABASE_URL.includes("YOUR_")&&!SUPABASE_ANON_KEY.includes("YOUR_")}
+populateSubjects();
 function msg(type,text){$("authError").style.display=type==="error"?"block":"none";$("authSuccess").style.display=type==="success"?"block":"none";if(type==="error")$("authError").textContent=text;if(type==="success")$("authSuccess").textContent=text}
 function clearMsg(){msg("none","")}
 
 $("googleBtn").addEventListener("click",async()=>{
   clearMsg();
-  if(!db){msg("error","Supabase is not configured yet.");return}
+
   const btn=$("googleBtn");
+  if(!btn)return;
+
+  if(!window.supabase){
+    msg("error","Supabase library did not load. Please refresh the page.");
+    return;
+  }
+
+  if(!db){
+    try{
+      db=window.supabase.createClient(SUPABASE_PROJECT_URL,SUPABASE_ANON_KEY);
+    }catch(err){
+      msg("error","Could not connect to Supabase: "+(err.message||"Unknown error"));
+      return;
+    }
+  }
+
   btn.disabled=true;
+  const original=btn.innerHTML;
   btn.innerHTML='<span class="google-icon">Loading…</span>';
+
   try{
-    const {error}=await db.auth.signInWithOAuth({
+    const redirectTo="https://thisisayushgupta.github.io/studyflow/";
+    const {data,error}=await db.auth.signInWithOAuth({
       provider:"google",
-      options:{redirectTo:"https://thisisayushgupta.github.io/studyflow/"}
+      options:{redirectTo,skipBrowserRedirect:true}
     });
+
     if(error)throw error;
+
+    if(!data || !data.url){
+      throw new Error("Supabase did not return a Google sign-in URL.");
+    }
+
+    // Explicit redirect is more reliable on GitHub Pages/mobile browsers.
+    window.location.assign(data.url);
   }catch(err){
+    console.error("Google sign-in error:",err);
     msg("error",err.message||"Could not start Google sign-in.");
     btn.disabled=false;
-    btn.innerHTML='<span class="google-icon"><svg viewBox="0 0 24 24" width="20" height="20"><path fill="#4285F4" d="M21.35 12.23c0-.7-.06-1.38-.18-2.03H12v3.84h5.24a4.48 4.48 0 0 1-1.94 2.94v2.45h3.14c1.84-1.69 2.91-4.18 2.91-7.2z"/><path fill="#34A853" d="M12 21.75c2.63 0 4.84-.87 6.45-2.36l-3.14-2.45c-.87.58-1.98.93-3.31.93-2.54 0-4.7-1.72-5.47-4.03H3.28v2.53A9.75 9.75 0 0 0 12 21.75z"/><path fill="#FBBC05" d="M6.53 13.84A5.86 5.86 0 0 1 6.22 12c0-.64.11-1.26.31-1.84V7.63H3.28A9.75 9.75 0 0 0 2.25 12c0 1.57.38 3.06 1.03 4.37l3.25-2.53z"/><path fill="#EA4335" d="M12 6.13c1.43 0 2.72.49 3.73 1.45l2.8-2.8C16.84 3.16 14.63 2.25 12 2.25a9.75 9.75 0 0 0-8.72 5.38l3.25 2.53C7.3 7.85 9.46 6.13 12 6.13z"/></svg></span><span>Continue with Google</span>';
+    btn.innerHTML=original;
   }
 });
 
-async function startApp(user){
- currentUser=user;
- $("authScreen").classList.add("hidden");$("app").classList.remove("hidden");
- $("userEmail").textContent=user.email;$("settingsEmail").textContent=user.email;
- await loadSessions();loadSettings();renderAll();
+function getSavedSubjects(){
+  try{
+    const saved=JSON.parse(localStorage.getItem("studyflow_subjects")||"null");
+    return Array.isArray(saved)?saved.filter(x=>typeof x==="string"&&x.trim()):[];
+  }catch(e){return []}
 }
-async function logout(){
- clearInterval(interval);timerRunning=false;
- if(db)await db.auth.signOut();
- currentUser=null;sessions=[];$("app").classList.add("hidden");$("authScreen").classList.remove("hidden");clearMsg();
+
+function saveSubjects(list){
+  const clean=[...new Set(list.map(x=>String(x).trim()).filter(Boolean))];
+  localStorage.setItem("studyflow_subjects",JSON.stringify(clean));
+  return clean;
 }
-async function loadSessions(){
- $("syncStatus").textContent="☁ Syncing…";
- const {data,error}=await db.from("study_sessions").select("id,created_at,subject,minutes,notes").order("created_at",{ascending:false});
- if(error){$("syncStatus").textContent="⚠ Sync error";console.error(error);return}
- sessions=data||[];$("syncStatus").textContent="☁ Cloud synced";
+
+function populateSubjects(preferred=""){
+  const select=$("subject");
+  if(!select)return;
+
+  const historySubjects=sessions.map(s=>s.subject||"").filter(Boolean);
+  const subjects=saveSubjects([
+    ...getSavedSubjects(),
+    ...DEFAULT_SUBJECTS,
+    ...historySubjects
+  ]);
+
+  const current=preferred || select.value || subjects[0] || "";
+  select.innerHTML="";
+  subjects.forEach(subject=>{
+    const option=document.createElement("option");
+    option.value=subject;
+    option.textContent=subject;
+    select.appendChild(option);
+  });
+
+  const create=document.createElement("option");
+  create.value="__create_new__";
+  create.textContent="＋ Create new subject";
+  select.appendChild(create);
+
+  if(subjects.includes(current)) select.value=current;
+  else if(subjects.length) select.value=subjects[0];
 }
+
+function createNewSubject(){
+  const name=prompt("Enter the new subject name:");
+  if(name===null)return;
+
+  const subject=name.trim();
+  if(!subject){
+    alert("Please enter a subject name.");
+    return;
+  }
+
+  const existing=getSavedSubjects();
+  const match=[...existing,...DEFAULT_SUBJECTS,...sessions.map(s=>s.subject||"")]
+    .find(x=>String(x).trim().toLowerCase()===subject.toLowerCase());
+
+  if(match){
+    populateSubjects(match);
+    return;
+  }
+
+  saveSubjects([...existing,subject]);
+  populateSubjects(subject);
+  $("syncStatus").textContent="☁ Subject added";
+}
+
+
+function openManualLog(){
+  if(!currentUser){alert("Please sign in first.");return}
+  const modal=$("manualLogModal");
+  const now=new Date();
+  $("manualDate").value=dateKey(now);
+  $("manualTime").value=`${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  $("manualHours").value=0;
+  $("manualMinutes").value=30;
+  $("manualNotes").value=$("notes")?.value||"";
+  populateManualSubjects($("subject")?.value||"");
+  $("manualLogError").style.display="none";
+  modal.classList.add("open");
+  modal.setAttribute("aria-hidden","false");
+  setTimeout(()=>$("manualSubject").focus(),50);
+}
+function closeManualLog(){
+  const modal=$("manualLogModal");
+  modal.classList.remove("open");
+  modal.setAttribute("aria-hidden","true");
+}
+function populateManualSubjects(preferred=""){
+  const select=$("manualSubject");
+  const main=$("subject");
+  if(!select||!main)return;
+  select.innerHTML="";
+  [...main.options].forEach(o=>{
+    const option=document.createElement("option");
+    option.value=o.value; option.textContent=o.textContent;
+    select.appendChild(option);
+  });
+  const desired=preferred||getSavedSubjects()[0]||DEFAULT_SUBJECTS[0]||"";
+  if(desired)select.value=desired;
+}
+async function saveManualSession(){
+  if(sessionSaving)return;
+  if(!db||!currentUser){alert("Please sign in first.");return}
+  const subject=$("manualSubject").value;
+  if(subject==="__create_new__"){
+    createNewSubject();
+    populateManualSubjects($("subject").value||"");
+    $("manualSubject").value=$("subject").value||"";
+    return;
+  }
+  const hours=Math.max(0,Math.floor(Number($("manualHours").value)||0));
+  const minutesPart=Math.max(0,Math.floor(Number($("manualMinutes").value)||0));
+  const totalMinutes=hours*60+minutesPart;
+  if(totalMinutes<1){$("manualLogError").textContent="Enter at least 1 minute.";$("manualLogError").style.display="block";return}
+  const date=$("manualDate").value;
+  if(!date){$("manualLogError").textContent="Please choose a date.";$("manualLogError").style.display="block";return}
+  const time=$("manualTime").value||"12:00";
+  const createdAt=new Date(`${date}T${time}:00`);
+  if(Number.isNaN(createdAt.getTime())){$("manualLogError").textContent="Please enter a valid date/time.";$("manualLogError").style.display="block";return}
+  const notes=$("manualNotes").value.trim();
+  const btn=$("manualSaveBtn");
+  btn.disabled=true; btn.textContent="Saving…";
+  $("manualLogError").style.display="none";
+  $("syncStatus").textContent="☁ Saving…";
+  saveSubjects([...getSavedSubjects(),subject]);
+  const {data,error}=await db.from("study_sessions").insert({user_id:currentUser.id,subject,minutes:totalMinutes,notes,created_at:createdAt.toISOString()}).select("id,created_at,subject,minutes,notes").single();
+  if(error){
+    $("syncStatus").textContent="⚠ Save failed";
+    $("manualLogError").textContent="Could not save session: "+(error.message||"Unknown Supabase error");
+    $("manualLogError").style.display="block";
+    console.error("Manual session insert error:",error);
+    btn.disabled=false; btn.textContent="Save to StudyFlow";
+    return;
+  }
+  sessions.unshift(data);
+  sessions.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+  $("syncStatus").textContent="☁ Cloud synced";
+  renderAll();
+  closeManualLog();
+  alert(`Added ${fmtMin(totalMinutes)} to StudyFlow.`);
+  btn.disabled=false; btn.textContent="Save to StudyFlow";
+}
+$("manualSubject")?.addEventListener("change",()=>{
+  if($("manualSubject").value==="__create_new__"){
+    createNewSubject();
+    populateManualSubjects($("subject").value||"");
+  }
+});
+$("manualLogModal")?.addEventListener("click",e=>{if(e.target===$("manualLogModal"))closeManualLog()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeManualLog()});
+
+$("subject").addEventListener("change",()=>{
+  if($("subject").value==="__create_new__"){
+    const previous=getSavedSubjects()[0] || sessions[0]?.subject || DEFAULT_SUBJECTS[0] || "";
+    createNewSubject();
+    if(!$("subject").value || $("subject").value==="__create_new__") populateSubjects(previous);
+  }
+});
+
 async function saveSession(minutes){
  const subject=$("subject").value.trim()||"Uncategorized",notes=$("notes").value.trim();
+ saveSubjects([...getSavedSubjects(),subject]);
  minutes=Math.max(1,Math.round(Number(minutes)));
  $("syncStatus").textContent="☁ Saving…";
  const {data,error}=await db.from("study_sessions").insert({user_id:currentUser.id,subject,minutes,notes}).select("id,created_at,subject,minutes,notes").single();
