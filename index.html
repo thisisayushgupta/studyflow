@@ -63,6 +63,9 @@ input:focus,select:focus{background:#fff;border-color:#bdbdc2;box-shadow:0 0 0 3
 .auth-error{display:none;margin-top:14px;padding:11px 13px;border-radius:12px;background:#fff0f0;color:#b52828;font-size:12px;line-height:1.45;text-align:left}.auth-note{font-size:11px;color:#999;margin-top:17px;line-height:1.45}
 .config-warning{margin-top:15px;padding:11px;border-radius:11px;background:#fff8e6;border:1px solid #edd78c;color:#7a5a00;font-size:11px;text-align:left}
 
+.timer-fullscreen{position:fixed;z-index:10000;inset:0;background:#0d0d0f;color:#fff;display:flex;flex-direction:column;padding:28px 34px calc(28px + env(safe-area-inset-bottom))}
+.timer-fullscreen.hidden{display:none!important}.fs-top{display:flex;justify-content:space-between;align-items:flex-start}.fs-brand{font-size:20px;font-weight:850}.fs-brand span{color:#777}.fs-subject{font-size:12px;color:#8d8d93;margin-top:5px}.fs-close{width:42px;height:42px;border-radius:50%;background:#242428;color:#ddd;font-size:27px}.fs-center{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center}.fs-label{font-size:11px;color:#888;letter-spacing:2px;font-weight:750}.fs-time{font-variant-numeric:tabular-nums;font-size:clamp(100px,18vw,220px);font-weight:700;letter-spacing:-9px;line-height:.9;margin:28px 0 42px}.fs-actions{display:grid;grid-template-columns:110px 130px 110px;gap:9px;width:min(360px,100%)}.fs-actions .btn{min-height:54px}.fs-bottom{font-size:10px;color:#555;text-align:center}
+@media(max-width:700px){.timer-fullscreen{padding:20px 18px calc(20px + env(safe-area-inset-bottom))}.fs-time{font-size:clamp(72px,22vw,120px);letter-spacing:-6px;margin:22px 0 35px}.fs-actions{grid-template-columns:1fr 1.1fr 1fr;gap:7px}.fs-actions .btn{min-height:50px;font-size:12px}}
 @media(max-width:900px){
  .sidebar{width:70px}.brand{font-size:0}.brand:after{content:"S";font-size:22px}.nav button{font-size:0;text-align:center}.nav button:nth-child(1):before{content:"⌂";font-size:20px}.nav button:nth-child(2):before{content:"◔";font-size:20px}.nav button:nth-child(3):before{content:"▤";font-size:20px}.nav button:nth-child(4):before{content:"⚙";font-size:19px}.userbox{display:none}.main{margin-left:70px;padding:25px}.grid,.analytics-grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}
 }
@@ -150,6 +153,7 @@ input:focus,select:focus{background:#fff;border-color:#bdbdc2;box-shadow:0 0 0 3
             <button class="btn primary" id="startBtn" onclick="toggleTimer()">Start</button>
             <button class="btn secondary" id="saveSessionBtn" onclick="savePartialSession()" disabled>Save</button>
           </div>
+          <button class="btn secondary" id="fullscreenBtn" onclick="toggleFullscreenTimer()" style="width:100%;margin-top:9px;min-height:45px">⛶ Fullscreen Timer</button>
 
           <div class="session-row">
             <div>
@@ -228,6 +232,15 @@ input:focus,select:focus{background:#fff;border-color:#bdbdc2;box-shadow:0 0 0 3
       </div>
     </section>
   </main>
+</div>
+
+<div id="timerFullscreen" class="timer-fullscreen hidden">
+  <div class="fs-top"><div><div class="fs-brand">Study<span>Flow</span></div><div class="fs-subject" id="fsSubject">Focus Session</div></div><button class="fs-close" onclick="exitFullscreenTimer()">×</button></div>
+  <div class="fs-center">
+    <div class="fs-label">FOCUS SESSION</div><div class="fs-time" id="fsTimer">25:00</div>
+    <div class="fs-actions"><button class="btn secondary" onclick="resetTimer()">Reset</button><button class="btn primary" id="fsStartBtn" onclick="toggleTimer()">Start</button><button class="btn secondary" id="fsSaveBtn" onclick="savePartialSession()" disabled>Save</button></div>
+  </div>
+  <div class="fs-bottom">StudyFlow • Stay focused</div>
 </div>
 
 <div id="manualModal" class="modal-backdrop hidden">
@@ -472,12 +485,21 @@ $("manualSubject").addEventListener("change",()=>{
 
 /* ---------- TIMER ---------- */
 
+let audioCtx=null;
+function playTimerFinishedSound(){try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==="suspended")audioCtx.resume();const now=audioCtx.currentTime;[0,.22,.44].forEach((o,i)=>{const osc=audioCtx.createOscillator(),gain=audioCtx.createGain();osc.type="sine";osc.frequency.value=[660,784,988][i];gain.gain.setValueAtTime(.0001,now+o);gain.gain.exponentialRampToValueAtTime(.22,now+o+.02);gain.gain.exponentialRampToValueAtTime(.0001,now+o+.18);osc.connect(gain);gain.connect(audioCtx.destination);osc.start(now+o);osc.stop(now+o+.2)})}catch(e){console.warn("Sound unavailable",e)}}
+async function notifyTimerFinished(){playTimerFinishedSound();if("Notification"in window){try{if(Notification.permission==="default")await Notification.requestPermission();if(Notification.permission==="granted")new Notification("StudyFlow",{body:"Your study session is finished. Great work!",tag:"studyflow-session-finished"})}catch(e){}}if(navigator.vibrate){try{navigator.vibrate([250,120,250,120,500])}catch(e){}}}
+function updateFullscreenTimer(){if($("timerFullscreen").classList.contains("hidden"))return;$("fsTimer").textContent=$("timer").textContent;$("fsStartBtn").textContent=$("startBtn").textContent;$("fsSaveBtn").disabled=$("saveSessionBtn").disabled;$("fsSubject").textContent=$("subject").value==="__new__"?"Focus Session":($("subject").value||"Focus Session")}
+function toggleFullscreenTimer(){$("timerFullscreen").classList.remove("hidden");updateFullscreenTimer();if($("timerFullscreen").requestFullscreen)$("timerFullscreen").requestFullscreen().catch(()=>{})}
+function exitFullscreenTimer(){$("timerFullscreen").classList.add("hidden");if(document.fullscreenElement)document.exitFullscreen().catch(()=>{})}
+document.addEventListener("fullscreenchange",()=>{if(!document.fullscreenElement&&!$("timerFullscreen").classList.contains("hidden"))$("timerFullscreen").classList.add("hidden")});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("timerFullscreen").classList.contains("hidden"))exitFullscreenTimer()});
 function renderTimer(){
   const s = Math.max(0, Math.round(timerRunning ? elapsedSeconds + (Date.now()-activeStartedAt)/1000 : elapsedSeconds));
   const remaining = Math.max(0, plannedSeconds - s);
   $("timer").textContent = `${pad(Math.floor(remaining/60))}:${pad(remaining%60)}`;
   $("startBtn").textContent = timerRunning ? "Pause" : (s > 0 ? "Resume" : "Start");
   $("saveSessionBtn").disabled = s < 60;
+  updateFullscreenTimer();
 }
 
 function persistTimer(){
@@ -546,6 +568,7 @@ function toggleTimer(){
       clearInterval(timerInterval);
       timerInterval = null;
       renderTimer();
+      await notifyTimerFinished();
       await saveSessionMinutes(Math.floor(plannedSeconds/60), true);
       resetTimer();
     }
